@@ -1,0 +1,20 @@
+﻿# System & Editor files
+.vscode/
+.idea/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Build artifacts & large binaries
+target/
+dist/
+build/
+node_modules/
+cloudflared.exe
+riducaov-website.zip
+
+# Push automation & local scripts
+push_to_github.*
+.tempmediaStorage/
+scratch/
