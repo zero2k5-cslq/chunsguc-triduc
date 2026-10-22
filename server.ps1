@@ -794,13 +794,14 @@ while ($listener.IsListening) {
                     $db.orders = $orderList
 
                     # Ghi lịch sử giao dịch thanh toán gói qua VietQR
-                    $desc = "Thanh toán gói [$pkgName] qua VietQR NGUYEN TRI DUC (0111111111100)"
+                    $currStk = if ($db.settings -and $db.settings.bankAccount) { $db.settings.bankAccount } else { "01111111111100" }
+                    $desc = "Thanh toán gói [$pkgName] qua VietQR NGUYEN TRI DUC ($currStk)"
                     $newTx = [PSCustomObject]@{
                         id = $txId
                         username = $u
                         type = "order"
                         amount = $amt
-                        method = "VietQR (0111111111100)"
+                        method = "VietQR ($currStk)"
                         description = $desc
                         status = "SUCCESS"
                         createdAt = (Get-Date).ToString("dd/MM/yyyy HH:mm:ss")
@@ -811,9 +812,10 @@ while ($listener.IsListening) {
                 } else {
                     # Nạp tiền vào tài khoản
                     $userFound.balance += $amt
-                    $desc = if ($hasBill) { "Nạp tiền tự động qua QR NGUYEN TRI DUC (Đã nhận & xác minh Bill)" } else { "Nạp tiền tự động qua QR NGUYEN TRI DUC (0111111111100)" }
+                    $currStk = if ($db.settings -and $db.settings.bankAccount) { $db.settings.bankAccount } else { "01111111111100" }
+                    $desc = if ($hasBill) { "Nạp tiền tự động qua QR NGUYEN TRI DUC (Đã nhận & xác minh Bill)" } else { "Nạp tiền tự động qua QR NGUYEN TRI DUC ($currStk)" }
                     if ($pkgName -and $pkgName -ne "Nạp tiền VietQR tự động") {
-                        $desc = "Nạp tiền qua VietQR theo gói [$pkgName] (0111111111100 - NGUYEN TRI DUC)"
+                        $desc = "Nạp tiền qua VietQR theo gói [$pkgName] ($currStk - NGUYEN TRI DUC)"
                     }
                     $newTx = [PSCustomObject]@{
                         id = $txId
@@ -891,8 +893,14 @@ while ($listener.IsListening) {
             if ($safePkg.Length -gt 15) { $safePkg = $safePkg.Substring(0, 15).Trim() }
             $transferContent = "NAP " + $safePkg + " " + $u
 
+            $st = $db.settings
+            $stk = if ($st -and $st.bankAccount) { $st.bankAccount } else { "01111111111100" }
+            $bOwner = if ($st -and $st.bankOwner) { $st.bankOwner } else { "NGUYEN TRI DUC" }
+            $bName = if ($st -and $st.bankName) { $st.bankName } else { "MB Bank (Ngân hàng Quân đội)" }
+            $encodedOwner = [System.Uri]::EscapeDataString($bOwner)
+
             $encodedContent = [System.Uri]::EscapeDataString($transferContent)
-            $qrUrl = "https://img.vietqr.io/image/970422-0111111111100-compact2.png?amount=$amt&addInfo=$encodedContent&accountName=NGUYEN%20TRI%20DUC"
+            $qrUrl = "https://img.vietqr.io/image/970422-$stk-compact2.png?amount=$amt&addInfo=$encodedContent&accountName=$encodedOwner"
 
             $session = [PSCustomObject]@{
                 txId = $txId
@@ -904,10 +912,10 @@ while ($listener.IsListening) {
                 code = $code
                 transferContent = $transferContent
                 qrUrl = $qrUrl
-                bankName = "MB Bank (Ngân hàng Quân đội)"
+                bankName = $bName
                 bankBin = "970422"
-                bankAccount = "0111111111100"
-                bankOwner = "NGUYEN TRI DUC"
+                bankAccount = $stk
+                bankOwner = $bOwner
                 status = "PENDING"
                 newBalance = 0
                 orderId = ""
@@ -1116,7 +1124,7 @@ while ($listener.IsListening) {
                     adminZalo = "https://zalo.me/triduc1903"
                     ticketPrice = 500
                     bankName = "MB Bank"
-                    bankAccount = "0111111111100"
+                    bankAccount = "01111111111100"
                     bankOwner = "NGUYEN TRI DUC"
                 }
             }

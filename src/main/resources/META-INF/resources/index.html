@@ -600,7 +600,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: color-mix(in srgb, var(--color-muted) 60%, transparent); border-radius: var(--radius-md);">
                                 <span style="opacity: 0.75;"><i class="fas fa-credit-card" style="margin-right: 6px;"></i> Số tài khoản:</span>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <strong id="bankNumberDisplay" style="font-size: 1.15rem; font-family: monospace; letter-spacing: 1px; color: var(--color-foreground);">0111111111100</strong>
+                                    <strong id="bankNumberDisplay" style="font-size: 1.15rem; font-family: monospace; letter-spacing: 1px; color: var(--color-foreground);">01111111111100</strong>
                                     <button class="copy-btn" onclick="copyText('bankNumberDisplay')"><i class="fas fa-copy"></i> Sao chép</button>
                                 </div>
                             </div>
@@ -659,7 +659,7 @@
                         </div>
                     </div>
 
-                    <!-- Cột phải: DUY NHẤT 1 MÃ VIETQR CHÍNH THỨC (QUÉT LÀ RA NGAY NGUYEN TRI DUC 0111111111100) -->
+                    <!-- Cột phải: DUY NHẤT 1 MÃ VIETQR CHÍNH THỨC (QUÉT LÀ RA NGAY NGUYEN TRI DUC 01111111111100) -->
                     <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
                         <div>
                             <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
@@ -675,7 +675,7 @@
                                 <img id="vietQrImg" src="assets/vietqr_real.png" alt="Mã VietQR NGUYEN TRI DUC" style="width: 240px; height: auto; max-width: 100%; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
                                 <div style="margin-top: 10px; font-weight: 700; font-size: 0.95rem; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 6px;">
                                     <i class="fas fa-check-circle" style="color: #22c55e;"></i>
-                                    <span>NGUYEN TRI DUC - 0111111111100</span>
+                                    <span id="vietQrTextDisplay">NGUYEN TRI DUC - 01111111111100</span>
                                 </div>
                             </div>
 
@@ -882,12 +882,12 @@
 
             <!-- Liên hệ Admin, Zalo, Điều khoản, Bảo mật -->
             <div class="footer-contacts">
-                <a href="tel:0901234567" class="footer-link-item" title="Gọi Hotline Admin">
+                <a href="tel:0372852287" class="footer-link-item" id="footerHotlineLink" title="Gọi Hotline Admin">
                     <i class="fas fa-phone-volume" style="color: var(--color-primary); font-size: 1.1rem;"></i>
-                    <span>Hotline: <strong>0901.234.567</strong></span>
+                    <span>Hotline: <strong id="footerHotlineDisplay">0372.852.287</strong></span>
                 </a>
 
-                <a href="https://zalo.me/triduc1903" target="_blank" rel="noopener noreferrer" class="footer-link-item" title="Chat Zalo với Admin">
+                <a href="https://zalo.me/triduc1903" id="footerZaloLink" target="_blank" rel="noopener noreferrer" class="footer-link-item" title="Chat Zalo với Admin">
                     <i class="fas fa-comment-dots" style="color: #0088cc; font-size: 1.15rem;"></i>
                     <span>Zalo Admin: <strong>triduc1903</strong></span>
                 </a>
@@ -1324,26 +1324,29 @@
             if (safePkg.length > 15) safePkg = safePkg.substring(0, 15).trim();
             var content = ('NAP ' + safePkg + ' ' + currentUser.username).trim();
 
-            var qrUrl = `https://img.vietqr.io/image/970422-0111111111100-compact2.png?amount=${pkg.price}&addInfo=${encodeURIComponent(content)}&accountName=NGUYEN%20TRI%20DUC`;
+            var safeBankAcc = (activeSystemSettings && activeSystemSettings.bankAccount) ? activeSystemSettings.bankAccount : '01111111111100';
+            var safeBankOwner = (activeSystemSettings && activeSystemSettings.bankOwner) ? activeSystemSettings.bankOwner : 'NGUYEN TRI DUC';
+            var safeBankName = (activeSystemSettings && activeSystemSettings.bankName) ? activeSystemSettings.bankName : 'MB Bank';
+            var qrUrl = `https://img.vietqr.io/image/970422-${safeBankAcc}-compact2.png?amount=${pkg.price}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(safeBankOwner)}`;
 
             var qrModalHtml = `
                 <div style="text-align: left; font-size: 0.88rem; line-height: 1.5;">
                     <div style="background: white; border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.18); border: 2px solid var(--color-primary);">
                         <img src="${qrUrl}" onerror="this.src='assets/vietqr_real.png'" alt="Mã VietQR Chính Thức" style="width: 220px; height: auto; max-width: 100%; display: block; margin: 0 auto; object-fit: contain; border-radius: 6px;">
                         <div style="color: #1e293b; font-size: 0.82rem; font-weight: 700; margin-top: 8px;">
-                            <i class="fas fa-check-circle" style="color: #22c55e;"></i> VietQR MB Bank Tự Động Điền Tiền & Nội Dung (NAPAS 24/7)
+                            <i class="fas fa-check-circle" style="color: #22c55e;"></i> VietQR ${safeBankName} Tự Động Điền Tiền & Nội Dung (NAPAS 24/7)
                         </div>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; font-size: 0.85rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: rgba(0,0,0,0.06); border-radius: 6px;">
                             <span>Ngân hàng & Chủ TK:</span>
-                            <strong style="color: var(--color-primary);">MB BANK - NGUYEN TRI DUC</strong>
+                            <strong style="color: var(--color-primary);">${safeBankName} - ${safeBankOwner}</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: rgba(0,0,0,0.06); border-radius: 6px;">
                             <span>Số tài khoản:</span>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <strong style="font-family: monospace; font-size: 1.05rem; color: var(--color-foreground);" id="modalDirectStk">0111111111100</strong>
+                                <strong style="font-family: monospace; font-size: 1.05rem; color: var(--color-foreground);" id="modalDirectStk">${safeBankAcc}</strong>
                                 <button type="button" class="copy-btn" onclick="copyText('modalDirectStk')"><i class="fas fa-copy"></i></button>
                             </div>
                         </div>
@@ -1622,7 +1625,7 @@
         }
 
         // =====================================================================
-        // NẠP TIỀN TỰ ĐỘNG CHUYỂN KHOẢN (NGUYEN TRI DUC - 0111111111100) & GỬI BILL
+        // NẠP TIỀN TỰ ĐỘNG CHUYỂN KHOẢN (NGUYEN TRI DUC - 01111111111100) & GỬI BILL
         // =====================================================================
         var selectedDepositAmountVal = 20000;
         var selectedDepositPackageTitle = '';
@@ -1728,16 +1731,15 @@
             var qrAmtElem = document.getElementById('qrDisplayAmount');
             if (qrAmtElem) qrAmtElem.textContent = qrAmt.toLocaleString('vi-VN') + ' đ';
 
-            // Dùng DUY NHẤT 1 mã VietQR MB Bank chuẩn NAPAS 247 (BIN: 970422 - 0111111111100 - NGUYEN TRI DUC)
-            var dynamicVietQrUrl = 'https://img.vietqr.io/image/970422-0111111111100-compact2.png?amount=' + qrAmt 
-                + '&addInfo=' + encodeURIComponent(currentUser ? content : 'NAP TIEN') 
-                + '&accountName=NGUYEN%20TRI%20DUC';
+            // Dùng mã VietQR MB Bank chuẩn NAPAS 247 theo cài đặt từ database.json
+            var curAcc = (activeSystemSettings && activeSystemSettings.bankAccount) ? activeSystemSettings.bankAccount : '01111111111100';
+            var curOwner = (activeSystemSettings && activeSystemSettings.bankOwner) ? activeSystemSettings.bankOwner : 'NGUYEN TRI DUC';
+            var dynamicVietQrUrl = `https://img.vietqr.io/image/970422-${curAcc}-compact2.png?amount=${qrAmt}&addInfo=${encodeURIComponent(currentUser ? content : 'NAP TIEN')}&accountName=${encodeURIComponent(curOwner)}`;
 
             var qrImg = document.getElementById('vietQrImg');
             if (qrImg) {
                 qrImg.src = dynamicVietQrUrl;
                 qrImg.onerror = function() {
-                    // Dự phòng nếu không truy cập được vietqr.io: Dùng ảnh QR chuẩn MB Bank chính thức
                     this.src = 'assets/vietqr_real.png';
                 };
             }
@@ -2214,24 +2216,60 @@
             });
         }
 
+        var activeSystemSettings = {
+            siteName: "Chung sức Trí Đức",
+            adminPhone: "0372.852.287",
+            adminZalo: "https://zalo.me/triduc1903",
+            ticketPrice: 500,
+            bankName: "MB Bank",
+            bankAccount: "01111111111100",
+            bankOwner: "NGUYEN TRI DUC"
+        };
+
         async function fetchSettings() {
+            var data = null;
             try {
                 var res = await fetch('/api/settings');
                 if (res.ok) {
-                    var data = await res.json();
-                    if (data && data.ticketPrice) {
-                        unitPrice = parseInt(data.ticketPrice) || 500;
-                    }
+                    data = await res.json();
                 }
-            } catch(e) {
+            } catch(e) {}
+            if (!data) {
                 try {
-                    var local = JSON.parse(localStorage.getItem('system_settings') || '{}');
-                    if (local && local.ticketPrice) {
-                        unitPrice = parseInt(local.ticketPrice) || 500;
-                    }
+                    data = JSON.parse(localStorage.getItem('system_settings') || '{}');
                 } catch(err) {}
             }
+            if (data) {
+                activeSystemSettings = Object.assign(activeSystemSettings, data);
+                if (activeSystemSettings.ticketPrice) {
+                    unitPrice = parseInt(activeSystemSettings.ticketPrice) || 500;
+                }
+                // Đồng bộ số tài khoản, ngân hàng, chủ thẻ lên giao diện nạp tiền
+                var bNum = document.getElementById('bankNumberDisplay');
+                if (bNum && activeSystemSettings.bankAccount) bNum.textContent = activeSystemSettings.bankAccount;
+                var bName = document.getElementById('bankNameDisplay');
+                if (bName && activeSystemSettings.bankName) bName.textContent = activeSystemSettings.bankName + ' (Ngân hàng Quân đội)';
+                var bOwner = document.getElementById('bankOwnerDisplay');
+                if (bOwner && activeSystemSettings.bankOwner) bOwner.textContent = activeSystemSettings.bankOwner;
+                var vqText = document.getElementById('vietQrTextDisplay');
+                if (vqText && activeSystemSettings.bankAccount && activeSystemSettings.bankOwner) {
+                    vqText.textContent = activeSystemSettings.bankOwner + ' - ' + activeSystemSettings.bankAccount;
+                }
+
+                // Đồng bộ Hotline và Zalo Admin ở footer
+                var hotDisp = document.getElementById('footerHotlineDisplay');
+                if (hotDisp && activeSystemSettings.adminPhone) hotDisp.textContent = activeSystemSettings.adminPhone;
+                var hotLink = document.getElementById('footerHotlineLink');
+                if (hotLink && activeSystemSettings.adminPhone) {
+                    hotLink.href = 'tel:' + activeSystemSettings.adminPhone.replace(/[^0-9]/g, '');
+                }
+                var zaloLink = document.getElementById('footerZaloLink');
+                if (zaloLink && activeSystemSettings.adminZalo) zaloLink.href = activeSystemSettings.adminZalo;
+            }
             recalcSplitPricing();
+            if (typeof updateDepositQrInfo === 'function') {
+                updateDepositQrInfo();
+            }
         }
 
         // On document ready
