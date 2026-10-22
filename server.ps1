@@ -972,6 +972,21 @@ while ($listener.IsListening) {
             continue
         }
 
+        if (($path -eq "/api/settings" -or $path -eq "/api/admin/settings") -and $httpMethod -eq "POST") {
+            $db = Get-Database
+            $req = ConvertFrom-Json $requestBody
+            if ($null -ne $req.ticketPrice) { $db.settings.ticketPrice = [int]$req.ticketPrice }
+            if ($req.siteName) { $db.settings.siteName = $req.siteName.Trim() }
+            if ($req.adminPhone) { $db.settings.adminPhone = $req.adminPhone.Trim() }
+            if ($req.adminZalo) { $db.settings.adminZalo = $req.adminZalo.Trim() }
+            if ($req.bankName) { $db.settings.bankName = $req.bankName.Trim() }
+            if ($req.bankAccount) { $db.settings.bankAccount = $req.bankAccount.Trim() }
+            if ($req.bankOwner) { $db.settings.bankOwner = $req.bankOwner.Trim() }
+            Save-Database $db
+            Send-JsonResponse $response 200 @{ success = $true; message = "Cập nhật cấu hình đơn giá thành công!"; settings = $db.settings }
+            continue
+        }
+
         # -----------------------------------------------------------------
         # API ROUTE: /api/deposit/card (Scratch card deposit)
         # -----------------------------------------------------------------
@@ -1084,6 +1099,53 @@ while ($listener.IsListening) {
                 }
             } else {
                 Send-JsonResponse $response 404 @{ success = $false; message = "Không tìm thấy user: $($u)" }
+            }
+            continue
+        }
+
+        # -----------------------------------------------------------------
+        # API ROUTE: /api/settings (GET)
+        # -----------------------------------------------------------------
+        if ($path -eq "/api/settings" -and $httpMethod -eq "GET") {
+            $db = Get-Database
+            $currentSettings = $db.settings
+            if ($null -eq $currentSettings) {
+                $currentSettings = [PSCustomObject]@{
+                    siteName = "Chung sức Trí Đức"
+                    adminPhone = "0372.852.287"
+                    adminZalo = "https://zalo.me/triduc1903"
+                    ticketPrice = 500
+                    bankName = "MB Bank"
+                    bankAccount = "0111111111100"
+                    bankOwner = "NGUYEN TRI DUC"
+                }
+            }
+            Send-JsonResponse $response 200 $currentSettings
+            continue
+        }
+
+        # -----------------------------------------------------------------
+        # API ROUTE: /api/settings or /api/admin/settings (POST - Update Ticket Price & Settings)
+        # -----------------------------------------------------------------
+        if (($path -eq "/api/settings" -or $path -eq "/api/admin/settings") -and $httpMethod -eq "POST") {
+            $db = Get-Database
+            $req = ConvertFrom-Json $requestBody
+            if ($null -eq $db.settings) {
+                $db | Add-Member -NotePropertyName settings -NotePropertyValue ([PSCustomObject]@{}) -Force
+            }
+            if ($null -ne $req.ticketPrice) { $db.settings.ticketPrice = [int]$req.ticketPrice }
+            if ($req.siteName) { $db.settings.siteName = $req.siteName.Trim() }
+            if ($req.adminPhone) { $db.settings.adminPhone = $req.adminPhone.Trim() }
+            if ($req.adminZalo) { $db.settings.adminZalo = $req.adminZalo.Trim() }
+            if ($req.bankName) { $db.settings.bankName = $req.bankName.Trim() }
+            if ($req.bankAccount) { $db.settings.bankAccount = $req.bankAccount.Trim() }
+            if ($req.bankOwner) { $db.settings.bankOwner = $req.bankOwner.Trim() }
+
+            Save-Database $db
+            Send-JsonResponse $response 200 @{
+                success = $true
+                message = "Đã lưu cài đặt đơn giá ($($db.settings.ticketPrice) đ/vé) và cấu hình thành công!"
+                settings = $db.settings
             }
             continue
         }
