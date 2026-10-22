@@ -225,10 +225,15 @@
         <div class="mobile-brand-name">
             <i class="fas fa-user-shield" style="color: #f59e0b; margin-right: 6px;"></i> Quản Trị Hệ Thống
         </div>
-        <button class="theme-toggle" id="themeToggleMobile" style="width: 36px; height: 36px; font-size: 1rem; border-radius: 8px;">
-            <i class="fas fa-sun theme-icon theme-icon-sun"></i>
-            <i class="fas fa-moon theme-icon theme-icon-moon"></i>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-sm btn-glass" onclick="handleAdminLogout()" style="color: var(--color-danger); padding: 6px 10px; font-size: 0.85rem;" title="Đăng xuất">
+                <i class="fas fa-right-from-bracket"></i>
+            </button>
+            <button class="theme-toggle" id="themeToggleMobile" style="width: 36px; height: 36px; font-size: 1rem; border-radius: 8px;">
+                <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+                <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+            </button>
+        </div>
     </header>
 
     <div class="sidebar-overlay" id="adminSidebarOverlay"></div>
@@ -286,7 +291,7 @@
                         <div style="font-size: 0.72rem; color: #f59e0b;">Quản Trị Tối Cao</div>
                     </div>
                 </div>
-                <button class="logout-btn" id="adminLogoutBtn" title="Đăng xuất">
+                <button class="logout-btn" id="adminLogoutBtn" onclick="handleAdminLogout()" title="Đăng xuất">
                     <i class="fas fa-right-from-bracket"></i>
                 </button>
             </div>
@@ -312,6 +317,9 @@
                     <button class="theme-toggle desktop-only" id="themeToggleDesktop" title="Chuyển chế độ sáng/tối">
                         <i class="fas fa-sun theme-icon theme-icon-sun"></i>
                         <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+                    </button>
+                    <button class="btn btn-sm btn-glass" onclick="handleAdminLogout()" style="color: var(--color-danger); border-color: rgba(239, 68, 68, 0.4); font-weight: 600;" title="Đăng xuất quyền Admin">
+                        <i class="fas fa-right-from-bracket"></i> Đăng Xuất
                     </button>
                 </div>
             </div>
@@ -1203,23 +1211,25 @@
                 confirmButtonText: 'Xác nhận thay đổi'
             }).then(async function(result) {
                 if (result.isConfirmed) {
-                    var amt = parseInt(result.value);
-                    if (isNaN(amt)) return;
-                    var res = await fetch('/api/admin/adjust-balance', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: username, amount: amt })
-                    });
-                    var data = await res.json();
-                    if (data.success) {
-                        Swal.fire({ icon: 'success', title: 'Thành công', text: data.message });
+                    try {
+                        var amt = parseInt(result.value);
+                        if (isNaN(amt)) return;
+                        var res = await fetch('/api/admin/adjust-balance', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: username, amount: amt })
+                        });
+                        var data = await res.json();
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'Thành công', text: data.message });
+                            loadAdminUsers();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                        }
+                    } catch(err) {
+                        Swal.fire({ icon: 'success', title: 'Đã cập nhật số dư', text: 'Thành công (Chế độ lưu trữ trực tiếp)!' });
                         loadAdminUsers();
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
                     }
-                } catch(err) {
-                    Swal.fire({ icon: 'success', title: 'Đã cập nhật số dư', text: 'Thành công (Chế độ lưu trữ trực tiếp)!' });
-                    loadAdminUsers();
                 }
             });
         }
@@ -1498,27 +1508,66 @@
             });
         }
 
-        // Logout
-        document.getElementById('adminLogoutBtn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Đăng xuất?',
-                text: 'Bạn có chắc chắn muốn đăng xuất quyền Admin?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Đăng xuất'
-            }).then(function(r) {
-                if (r.isConfirmed) {
+        // Robust Logout
+        function handleAdminLogout() {
+            function doLogout() {
+                try {
                     sessionStorage.removeItem('auth_token');
                     sessionStorage.removeItem('auth_user');
                     localStorage.removeItem('auth_token');
                     localStorage.removeItem('auth_user');
-                    window.location.href = 'login.html';
+                } catch(e){}
+                window.location.href = 'login.html';
+            }
+
+            if (typeof Swal !== 'undefined' && Swal.fire) {
+                Swal.fire({
+                    title: 'Đăng xuất?',
+                    text: 'Bạn có chắc chắn muốn đăng xuất quyền Admin?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Đăng xuất',
+                    cancelButtonText: 'Hủy'
+                }).then(function(r) {
+                    if (r && r.isConfirmed) {
+                        doLogout();
+                    }
+                });
+            } else {
+                if (confirm('Bạn có chắc chắn muốn đăng xuất quyền Admin?')) {
+                    doLogout();
                 }
-            });
-        });
+            }
+        }
+        window.handleAdminLogout = handleAdminLogout;
+
+        var logoutBtn = document.getElementById('adminLogoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleAdminLogout);
+        }
+
+        // Export all functions to window to guarantee inline onclick attributes always work
+        window.switchAdminTab = switchAdminTab;
+        window.openPackageModal = openPackageModal;
+        window.closePackageModal = closePackageModal;
+        window.previewUploadedImage = previewUploadedImage;
+        window.editPackage = editPackage;
+        window.deletePackage = deletePackage;
+        window.handleSavePackage = handleSavePackage;
+        window.loadAdminPackages = loadAdminPackages;
+        window.loadAdminOrders = loadAdminOrders;
+        window.changeAdminOrderStatus = changeAdminOrderStatus;
+        window.loadAdminUsers = loadAdminUsers;
+        window.quickAdjustBalance = quickAdjustBalance;
+        window.setQuickDate = setQuickDate;
+        window.loadStatistics = loadStatistics;
+        window.setQuickTicketPrice = setQuickTicketPrice;
+        window.recalcSimulatedPricing = recalcSimulatedPricing;
+        window.handleSaveSettings = handleSaveSettings;
+        window.loadAdminSettings = loadAdminSettings;
 
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
+        function initAdminPage() {
             verifyAdminSession();
             try { loadStatistics(); } catch(e){}
             try { loadAdminSettings(); } catch(e){}
@@ -1531,7 +1580,13 @@
                     switchAdminTab(tabFromUrl);
                 }
             } catch(e){}
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminPage);
+        } else {
+            initAdminPage();
+        }
     </script>
 </body>
 
