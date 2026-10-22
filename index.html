@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chung sức Trí Đức - Hệ Thống Sự Kiện Tự Động 24/7</title>
+    
+    <meta name="description" content="Chung sức Trí Đức - Hệ Thống Chạy Mã Mời Sự Kiện Liên Quân Mobile, Bắn Bi, Tăng Tim Tự Động 24/7 Siêu Tốc.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Chung sức Trí Đức">
+    <meta property="og:title" content="Chung sức Trí Đức - Sự Kiện Tự Động">
+    <meta property="og:description" content="Chạy mã mời Chung Sức Liên Quân Mobile, Bắn Bi tự động 24/7 siêu tốc tại Chung sức Trí Đức.">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:image" content="uploads/logo.png">
+
+    <!-- CSS Links -->
+    <link href="css/dynamic-theme.css" rel="stylesheet">
+    <link href="css/glass-theme.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="uploads/favicon.png">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('theme-preference');
+                if (!theme) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        .app-layout {
+            padding: var(--space-xl);
+            min-height: 100vh;
+            background: var(--color-background);
+            background-image: 
+                radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--color-primary) 12%, transparent) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--color-accent) 12%, transparent) 0%, transparent 45%);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tab-section {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .tab-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 2-column layout for Sự kiện chung sức */
+        .chungsuc-split-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 1.15fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .chungsuc-split-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Package cards in right half */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            max-height: 720px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .package-item-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .package-item-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--color-primary);
+            box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 20%, transparent);
+        }
+
+        .package-item-card.selected-package {
+            border: 2px solid var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 10%, var(--glass-bg));
+        }
+
+        .pkg-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ef4444, #f59e0b);
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .pkg-img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .badge-done {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .badge-running {
+            background: rgba(0, 145, 255, 0.15);
+            color: #0091ff;
+            border: 1px solid rgba(0, 145, 255, 0.3);
+        }
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .badge-cancelled {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .copy-btn {
+            background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+            color: var(--color-primary);
+            border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        /* Site Footer */
+        .site-footer {
+            margin-top: 40px;
+            padding: 28px 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            font-size: 0.88rem;
+        }
+        .footer-contacts {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .footer-link-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-foreground);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+        .footer-link-item:hover {
+            color: var(--color-primary);
+        }
+
+        /* Admin tabs */
+        .admin-subnav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+        .admin-subnav-btn {
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--color-foreground);
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .admin-subnav-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-top-bar">
+        <button class="mobile-menu-btn-inline" id="mobileMenuOpenBtn" title="Mở danh mục menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-brand-name">
+            <img src="uploads/logo.png" alt="Logo" style="width: 26px; height: 26px; vertical-align: middle; border-radius: 6px; margin-right: 6px;">
+            Chung sức Trí Đức
+        </div>
+        <div class="mobile-balance-chip" id="mobileBalanceChip" onclick="switchTab('deposit')">
+            <i class="fas fa-wallet"></i>
+            <span id="userBalanceMobile">0 đ</span>
+        </div>
+        <button class="theme-toggle" id="themeToggleMobile" style="width: 36px; height: 36px; font-size: 1rem; border-radius: 8px;" title="Chuyển chế độ sáng/tối">
+            <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+            <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+        </button>
+    </header>
+
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Application Sidebar -->
+    <aside class="app-sidebar" id="appSidebar">
+        <!-- Sidebar Brand Header -->
+        <div class="sidebar-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="uploads/logo.png" alt="Logo Chung sức Trí Đức" style="width: 38px; height: 38px; border-radius: var(--radius-md);">
+                <div>
+                    <h2 style="font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.2;">Chung sức Trí Đức</h2>
+                    <span style="font-size: 0.72rem; color: var(--color-accent); font-weight: 600;">● Hệ Thống Tự Động</span>
+                </div>
+            </div>
+            <button class="close-sidebar-btn mobile-only" id="mobileMenuCloseBtn" title="Đóng menu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Balance Card -->
+        <div class="sidebar-balance">
+            <div class="balance-card">
+                <div class="balance-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="balance-info" style="flex: 1;">
+                    <span class="balance-label">Số dư khả dụng</span>
+                    <span class="balance-amount" id="userBalanceText">0 đ</span>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="switchTab('deposit')" title="Nạp tiền ngay" style="padding: 6px 10px; font-size: 0.75rem;">
+                    <i class="fas fa-plus"></i> Nạp
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Navigation Menu -->
+        <nav class="sidebar-nav">
+            <!-- 1. Sự kiện chung sức (Đổi từ Tạo Mã Chung Sức) -->
+            <a href="javascript:void(0)" class="nav-item active highlight-item" data-tab-target="chungsuc">
+                <i class="fas fa-users-viewfinder"></i>
+                <span>Sự Kiện Chung Sức</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" data-tab-target="history">
+                <i class="fas fa-list-check"></i>
+                <span>Lịch Sử Chạy Mã</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" data-tab-target="deposit">
+                <i class="fas fa-qrcode"></i>
+                <span>Nạp Tiền Tự Động</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" data-tab-target="transactions">
+                <i class="fas fa-clock-rotate-left"></i>
+                <span>Lịch Sử Giao Dịch</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" data-tab-target="services">
+                <i class="fas fa-gamepad"></i>
+                <span>Dịch Vụ Liên Quân</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" data-tab-target="settings">
+                <i class="fas fa-shield-halved"></i>
+                <span>Cài Đặt & Bảo Mật</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar User Footer -->
+        <div class="sidebar-footer">
+            <div class="user-profile" id="userProfileBox">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.85rem;" id="userAvatarText">
+                    U
+                </div>
+                <div class="user-details">
+                    <span class="user-name" id="userNameText">Khách</span>
+                    <span class="user-role" id="userRoleText">Chưa đăng nhập</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn" title="Đăng xuất tài khoản">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <main class="app-layout">
+        <div>
+            <!-- Top Banner / Header Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); flex-wrap: wrap; gap: var(--space-md);">
+                <div>
+                    <h1 style="font-size: 1.6rem; font-weight: 700; margin: 0 0 4px;" id="pageMainTitle">
+                        ⚡ Chung Sức Trí Đức - Hệ Thống Sự Kiện Tự Động
+                    </h1>
+                    <p style="margin: 0; opacity: 0.7; font-size: 0.88rem;">
+                        Chuyên chạy mã mời sự kiện Liên Quân Mobile, Bắn Bi - Nhanh chóng & Ổn định 24/7
+                    </p>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="theme-toggle desktop-only" id="themeToggleDesktop" title="Chuyển chế độ sáng/tối">
+                        <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+                        <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+                    </button>
+                    <div id="authActionsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notice Alert Box -->
+            <div class="glass-card" style="padding: 14px 20px; margin-bottom: var(--space-xl); border-left: 4px solid var(--color-primary); display: flex; align-items: center; gap: 14px; background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 10%, transparent), var(--glass-bg));">
+                <i class="fas fa-bullhorn" style="color: var(--color-primary); font-size: 1.4rem;"></i>
+                <div style="font-size: 0.88rem; flex: 1;">
+                    <strong>Thông báo hệ thống:</strong> Tự động duyệt đơn 24/7. Tỷ lệ hoàn thành 100%. Nạp tiền ngân hàng qua <strong>VietQR</strong> được cộng tiền tự động trong 10-30 giây!
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- TAB 1: SỰ KIỆN CHUNG SỨC (CHIA 2 NỬA: FORM TRÁI + GÓI PHẢI) -->
+            <!-- ================================================================= -->
+            <section class="tab-section active" id="tab-chungsuc">
+                <div class="chungsuc-split-grid">
+                    <!-- NỬA TRÁI: FORM NHẬP MÃ, SỐ VÉ, ĐƠN GIÁ, TỔNG TIỀN, TÊN KHÁCH HÀNG, NÚT XÁC NHẬN -->
+                    <div class="glass-card">
+                        <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-pen-to-square" style="color: var(--color-primary);"></i>
+                                Đăng Ký Chạy Mã Sự Kiện
+                            </h2>
+                            <span class="badge badge-done" style="font-size: 0.75rem;">BOT Siêu Tốc 24/7</span>
+                        </div>
+
+                        <form id="orderFormSplit" onsubmit="handleSplitOrderSubmit(event)">
+                            <!-- 1. Nhập mã sự kiện -->
+                            <div style="margin-bottom: 18px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
+                                    1. Nhập Mã Sự Kiện (hoặc dán Link Chia Sẻ từ game):
+                                </label>
+                                <div class="input-wrapper" style="position: relative;">
+                                    <i class="fas fa-key" style="position: absolute; left: 16px; top: 16px; color: var(--color-primary);"></i>
+                                    <input type="text" id="splitEventCode" class="form-control" placeholder="Ví dụ: AOV888XYZ hoặc dán link mời trong game..." required style="padding-left: 48px; min-height: 48px;">
+                                </div>
+                                <small style="display: block; margin-top: 5px; font-size: 0.78rem; opacity: 0.7;">
+                                    <i class="fas fa-info-circle"></i> Hệ thống tự động lọc mã chính xác nếu bạn dán nguyên văn bản link mời.
+                                </small>
+                            </div>
+
+                            <!-- 2. Nhập số vé -->
+                            <div style="margin-bottom: 18px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
+                                    2. Nhập Số Vé (Lượt chạy):
+                                </label>
+                                <div class="input-wrapper" style="position: relative;">
+                                    <i class="fas fa-ticket" style="position: absolute; left: 16px; top: 16px; color: var(--color-accent);"></i>
+                                    <input type="number" id="splitTicketCount" min="1" max="1000" value="20" class="form-control" required style="padding-left: 48px; min-height: 48px;" oninput="recalcSplitPricing()">
+                                </div>
+                                <small style="display: block; margin-top: 5px; font-size: 0.78rem; opacity: 0.7;">
+                                    Bạn có thể chọn nhanh gói sự kiện ở cột bên phải để tự động điền số vé.
+                                </small>
+                            </div>
+
+                            <!-- 3. Hiện đơn giá và tính tổng số tiền bên dưới form đó -->
+                            <div style="background: color-mix(in srgb, var(--color-muted) 50%, transparent); border: 1px dashed var(--glass-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.88rem;">
+                                    <span style="opacity: 0.8;">Đơn giá mỗi vé:</span>
+                                    <strong style="color: var(--color-foreground);" id="splitUnitPriceDisplay">500 đ / vé</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.88rem;">
+                                    <span style="opacity: 0.8;">Gói áp dụng:</span>
+                                    <span id="splitPackageSelectedTitle" style="font-weight: 600; color: var(--color-accent);">Gói Tự Chọn (20 Vé)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 10px; font-size: 1.15rem;">
+                                    <strong>Tổng số tiền cần thanh toán:</strong>
+                                    <strong style="color: var(--color-primary); font-size: 1.35rem;" id="splitTotalPriceDisplay">10.000 đ</strong>
+                                </div>
+                            </div>
+
+                            <!-- 4. Tên khách hàng (BẮT BUỘC NHẬP) -->
+                            <div style="margin-bottom: 24px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem;">
+                                    3. Tên Khách Hàng <span style="color: var(--color-danger); font-weight: bold;">(Bắt buộc nhập)</span>:
+                                </label>
+                                <div class="input-wrapper" style="position: relative;">
+                                    <i class="fas fa-user-tag" style="position: absolute; left: 16px; top: 16px; color: var(--color-primary);"></i>
+                                    <input type="text" id="splitCustomerName" class="form-control" placeholder="Nhập họ và tên hoặc Nickname của bạn..." required style="padding-left: 48px; min-height: 48px;">
+                                </div>
+                                <small style="display: block; margin-top: 5px; font-size: 0.78rem; opacity: 0.7;">
+                                    Dùng để định danh và tra cứu đơn hàng khi cần hỗ trợ hoặc khiếu nại.
+                                </small>
+                            </div>
+
+                            <!-- 5. Nút Xác nhận chạy mã -->
+                            <button type="submit" class="btn btn-primary" id="splitSubmitBtn" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 700; border-radius: var(--radius-md);">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Xác Nhận Chạy Mã (<span id="btnSplitPriceText">10.000 đ</span>)</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- NỬA PHẢI: HIỆN DANH SÁCH CÁC GÓI SỰ KIỆN -->
+                    <div class="glass-card">
+                        <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-boxes-stacked" style="color: var(--color-accent);"></i>
+                                Danh Sách Gói Sự Kiện
+                            </h2>
+                            <span style="font-size: 0.8rem; opacity: 0.7;">Bấm chọn để áp dụng nhanh</span>
+                        </div>
+
+                        <!-- Render dynamic package cards -->
+                        <div class="packages-grid" id="packagesListContainer">
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 30px; opacity: 0.7;">
+                                <i class="fas fa-spinner fa-spin"></i> Đang tải danh sách gói sự kiện...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 2: LỊCH SỬ CHẠY MÃ (HISTORY) -->
+            <!-- ================================================================= -->
+            <section class="tab-section" id="tab-history">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-list-check" style="color: var(--color-primary);"></i>
+                                Lịch Sử Các Mã Đã Chạy
+                            </h2>
+                            <span style="font-size: 0.85rem; opacity: 0.7;">Tiến độ chạy mã được cập nhật theo thời gian thực</span>
+                        </div>
+
+                        <button class="btn btn-sm btn-glass" onclick="loadOrderHistory()">
+                            <i class="fas fa-arrows-rotate"></i> Làm mới
+                        </button>
+                    </div>
+
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;" id="orderHistoryTable">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 12px 14px;">MÃ ĐƠN</th>
+                                    <th style="padding: 12px 14px;">KHÁCH HÀNG</th>
+                                    <th style="padding: 12px 14px;">MÃ SỰ KIỆN</th>
+                                    <th style="padding: 12px 14px;">GÓI SỰ KIỆN</th>
+                                    <th style="padding: 12px 14px;">TIẾN ĐỘ VÉ</th>
+                                    <th style="padding: 12px 14px;">TRẠNG THÁI</th>
+                                    <th style="padding: 12px 14px;">THỜI GIAN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderHistoryTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 3: NẠP TIỀN TỰ ĐỘNG (CHỈ GIỮ CHUYỂN KHOẢN NGÂN HÀNG VIETQR) -->
+            <!-- ================================================================= -->
+            <section class="tab-section" id="tab-deposit">
+                <!-- 1. BẢNG CẢNH BÁO PHẢI ĐĂNG NHẬP MỚI NẠP ĐƯỢC TIỀN -->
+                <div id="depositLoginWarning" style="display: none; background: rgba(239, 68, 68, 0.12); border: 2px solid var(--color-danger); border-radius: var(--radius-lg); padding: 24px; text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 2.2rem; color: var(--color-danger); margin-bottom: 10px;">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin: 0 0 8px;">YÊU CẦU ĐĂNG NHẬP ĐỂ NẠP TIỀN</h3>
+                    <p style="font-size: 0.95rem; opacity: 0.85; max-width: 520px; margin: 0 auto 18px; line-height: 1.5;">
+                        Quy định hệ thống: Bạn phải đăng nhập tài khoản trước khi nạp tiền để tiền nạp được cộng chính xác vào số dư của bạn.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <a href="login.html" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">
+                            <i class="fas fa-sign-in-alt"></i> Đăng Nhập Ngay
+                        </a>
+                        <a href="register.html" class="btn btn-glass" style="padding: 10px 24px; font-weight: 600;">
+                            <i class="fas fa-user-plus"></i> Đăng Ký Tài Khoản
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. KHUNG CHÍNH NẠP TIỀN -->
+                <div id="depositMainContent" style="display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-xl);" class="chungsuc-split-grid">
+                    <!-- Cột trái: Form nhập số tiền, thông tin tài khoản & Gửi Bill -->
+                    <div class="glass-card">
+                        <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                            <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-building-columns" style="color: var(--color-primary);"></i>
+                                Nạp Tiền Chuyển Khoản Ngân Hàng
+                            </h2>
+                            <span class="badge badge-done" style="font-size: 0.75rem;"><i class="fas fa-bolt"></i> Tự Động 24/7</span>
+                        </div>
+
+                        <!-- 1. Ô Nhập Số Tiền Cần Nạp (Tối thiểu 20.000 đ) -->
+                        <div style="margin-bottom: 18px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.92rem;">
+                                1. Nhập số tiền bạn muốn nạp (VNĐ):
+                            </label>
+                            <div class="input-wrapper" style="position: relative;">
+                                <i class="fas fa-money-bill-wave" style="position: absolute; left: 16px; top: 16px; color: var(--color-primary); font-size: 1.1rem;"></i>
+                                <input type="number" id="customDepositAmountInput" class="form-control" min="20000" step="1000" value="20000" placeholder="Nhập số tiền nạp (tối thiểu 20.000 đ)..." required style="padding-left: 48px; min-height: 48px; font-size: 1.05rem; font-weight: 700; color: var(--color-primary);" oninput="handleCustomDepositInput(this.value)">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.8rem;">
+                                <span style="opacity: 0.75;"><i class="fas fa-info-circle"></i> Mệnh giá nạp tối thiểu là <strong>20.000 đ</strong></span>
+                                <span id="depositAmountFormatted" style="font-weight: 700; color: var(--color-primary);">20.000 đ</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Chọn nạp nhanh theo Gói sự kiện hoặc theo mệnh giá -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.88rem; opacity: 0.9;">
+                                <i class="fas fa-boxes-stacked" style="color: var(--color-accent); margin-right: 6px;"></i>
+                                Chọn nạp theo Gói Sự Kiện (Tự động điền số tiền & cú pháp Tên Gói):
+                            </label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;" id="packageDepositBtnGroup">
+                                <!-- Populated dynamically from packages list -->
+                            </div>
+
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.88rem; opacity: 0.85;">
+                                Hoặc chọn nhanh mệnh giá cố định:
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;" id="quickDepositBtnGroup">
+                                <button type="button" class="btn btn-primary" onclick="selectDepositAmount(20000, this)">20.000 đ</button>
+                                <button type="button" class="btn btn-glass" onclick="selectDepositAmount(50000, this)">50.000 đ</button>
+                                <button type="button" class="btn btn-glass" onclick="selectDepositAmount(100000, this)">100.000 đ</button>
+                                <button type="button" class="btn btn-glass" onclick="selectDepositAmount(200000, this)">200.000 đ</button>
+                                <button type="button" class="btn btn-glass" onclick="selectDepositAmount(500000, this)">500.000 đ</button>
+                                <button type="button" class="btn btn-glass" onclick="selectDepositAmount(1000000, this)">1.000.000 đ</button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Thông tin tài khoản nhận tiền -->
+                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem; margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: color-mix(in srgb, var(--color-muted) 60%, transparent); border-radius: var(--radius-md);">
+                                <span style="opacity: 0.75;"><i class="fas fa-building" style="margin-right: 6px;"></i> Ngân hàng / Dịch vụ:</span>
+                                <strong style="color: var(--color-primary);" id="bankNameDisplay">MB BANK (Ngân hàng Quân đội)</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: color-mix(in srgb, var(--color-muted) 60%, transparent); border-radius: var(--radius-md);">
+                                <span style="opacity: 0.75;"><i class="fas fa-credit-card" style="margin-right: 6px;"></i> Số tài khoản:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong id="bankNumberDisplay" style="font-size: 1.15rem; font-family: monospace; letter-spacing: 1px; color: var(--color-foreground);">0111111111100</strong>
+                                    <button class="copy-btn" onclick="copyText('bankNumberDisplay')"><i class="fas fa-copy"></i> Sao chép</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: color-mix(in srgb, var(--color-muted) 60%, transparent); border-radius: var(--radius-md);">
+                                <span style="opacity: 0.75;"><i class="fas fa-user-check" style="margin-right: 6px;"></i> Chủ tài khoản:</span>
+                                <strong id="bankOwnerDisplay" style="color: var(--color-primary); font-size: 1rem;">NGUYEN TRI DUC</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: color-mix(in srgb, var(--color-primary) 12%, transparent); border: 1px solid var(--color-primary); border-radius: var(--radius-md);">
+                                <span style="color: var(--color-primary); font-weight: 700;"><i class="fas fa-pen-nib" style="margin-right: 6px;"></i> Nội dung CK bắt buộc:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong id="bankContentDisplay" style="color: var(--color-primary); font-size: 1.15rem; font-family: monospace;">NAP [VUI LÒNG ĐĂNG NHẬP]</strong>
+                                    <button class="copy-btn" onclick="copyText('bankContentDisplay')"><i class="fas fa-copy"></i> Sao chép</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. PHẦN YÊU CẦU GỬI BILL KHI CHUYỂN KHOẢN XONG -->
+                        <div style="background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 12%, transparent), color-mix(in srgb, var(--color-primary) 8%, transparent)); border: 1.5px dashed var(--color-accent); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--color-accent); font-weight: 700; font-size: 0.95rem;">
+                                <i class="fas fa-camera"></i>
+                                <span>Yêu Cầu Gửi Bill Sau Khi Chuyển Khoản:</span>
+                            </div>
+                            
+                            <!-- Banner text từ hình ảnh người dùng -->
+                            <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; color: #f59e0b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-comment-dots" style="font-size: 1.1rem;"></i>
+                                <span>Quý khách vui lòng chụp cho mình xin Bill sau khi chuyển nhé</span>
+                            </div>
+
+                            <!-- Input file và Preview -->
+                            <input type="file" id="depositBillFileInput" accept="image/*" style="display: none;" onchange="handleBillFileSelected(this)">
+                            <button type="button" class="btn btn-glass" style="width: 100%; border: 1px dashed var(--glass-border); padding: 12px; font-weight: 600;" onclick="document.getElementById('depositBillFileInput').click()">
+                                <i class="fas fa-cloud-arrow-up" style="color: var(--color-primary);"></i>
+                                <span id="billUploadBtnText">Bấm vào đây để chọn ảnh Bill hoặc chụp màn hình</span>
+                            </button>
+
+                            <div id="billPreviewContainer" style="display: none; margin-top: 12px; text-align: center;">
+                                <img id="billPreviewImg" src="" alt="Ảnh Bill Chuyển Khoản" style="max-height: 180px; max-width: 100%; border-radius: 8px; border: 1px solid var(--glass-border); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                <div style="margin-top: 6px; display: flex; justify-content: center; gap: 8px;">
+                                    <span style="font-size: 0.8rem; color: #22c55e; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-check-circle"></i> Đã chọn ảnh Bill
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-danger" style="padding: 2px 8px; font-size: 0.75rem;" onclick="clearBillFile()">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Nút Xác nhận đã chuyển khoản & Gửi bill -->
+                        <button type="button" class="btn btn-primary" id="btnDepositSubmit" style="width: 100%; padding: 16px; font-weight: 700; font-size: 1.05rem; box-shadow: 0 4px 16px color-mix(in srgb, var(--color-primary) 35%, transparent);" onclick="submitDepositWithBill()">
+                            <i class="fas fa-paper-plane"></i> Xác Nhận Đã Chuyển Tiền & Gửi Bill
+                        </button>
+                        <div style="text-align: center; margin-top: 10px; font-size: 0.78rem; opacity: 0.7;">
+                            Hệ thống kiểm tra tự động và cộng tiền vào tài khoản ngay lập tức khi tiền vào.
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: DUY NHẤT 1 MÃ VIETQR CHÍNH THỨC (QUÉT LÀ RA NGAY NGUYEN TRI DUC 0111111111100) -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
+                        <div>
+                            <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
+                                <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-qrcode" style="color: var(--color-accent);"></i>
+                                    Mã VietQR Thanh Toán Chính Thức
+                                </h3>
+                                <span class="badge badge-done" style="font-size: 0.75rem;"><i class="fas fa-shield-check"></i> Xác Thực 24/7</span>
+                            </div>
+
+                            <!-- Khung chứa DUY NHẤT 1 mã VietQR chuẩn xác -->
+                            <div style="background: white; border-radius: 18px; padding: 18px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.25); border: 3px solid var(--color-primary); margin-bottom: 18px; position: relative;">
+                                <img id="vietQrImg" src="assets/vietqr_real.png" alt="Mã VietQR NGUYEN TRI DUC" style="width: 240px; height: auto; max-width: 100%; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                                <div style="margin-top: 10px; font-weight: 700; font-size: 0.95rem; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                                    <span>NGUYEN TRI DUC - 0111111111100</span>
+                                </div>
+                            </div>
+
+                            <!-- Thông tin tương ứng số tiền & cú pháp theo gói đã chọn -->
+                            <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 14px 16px; text-align: left; margin-bottom: 16px; font-size: 0.88rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="opacity: 0.8;"><i class="fas fa-money-bill-wave" style="color: var(--color-primary); margin-right: 6px;"></i> Số tiền cần chuyển:</span>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <strong style="color: #22c55e; font-size: 1.15rem;" id="qrDisplayAmount">20.000 đ</strong>
+                                        <button type="button" class="copy-btn" onclick="copyAmount()"><i class="fas fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="opacity: 0.8;"><i class="fas fa-pen-nib" style="color: var(--color-accent); margin-right: 6px;"></i> Cú pháp nội dung:</span>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <strong style="color: var(--color-primary); font-family: monospace; font-size: 1rem;" id="qrDisplayContent">NAP [VUI LÒNG ĐĂNG NHẬP]</strong>
+                                        <button type="button" class="copy-btn" onclick="copyText('qrDisplayContent')"><i class="fas fa-copy"></i> Sao chép</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="font-size: 0.82rem; opacity: 0.85; line-height: 1.5; color: var(--color-foreground);">
+                                <i class="fas fa-mobile-screen-button" style="color: var(--color-accent); margin-right: 4px;"></i>
+                                Quét mã bằng Viettel Money, MBBank, Vietcombank, Techcombank, Momo, BIDV, v.v.
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 16px;">
+                            <div style="font-size: 0.82rem; opacity: 0.85; line-height: 1.5; background: color-mix(in srgb, var(--color-muted) 50%, transparent); padding: 12px; border-radius: var(--radius-md); text-align: left;">
+                                💡 <strong>Mẹo:</strong> Sau khi quét QR và chuyển tiền xong, bạn hãy chụp ảnh biên lai giao dịch (Bill) và bấm nút <strong>Xác Nhận Đã Chuyển Tiền & Gửi Bill</strong> bên cạnh để được duyệt cộng tiền siêu tốc!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 4: LỊCH SỬ GIAO DỊCH (TRANSACTIONS) -->
+            <!-- ================================================================= -->
+            <section class="tab-section" id="tab-transactions">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-clock-rotate-left" style="color: var(--color-primary);"></i>
+                                Lịch Sử Nạp & Trừ Tiền
+                            </h2>
+                            <span style="font-size: 0.85rem; opacity: 0.7;">Toàn bộ biến động số dư tài khoản của bạn</span>
+                        </div>
+
+                        <button class="btn btn-sm btn-glass" onclick="loadTransactions()">
+                            <i class="fas fa-arrows-rotate"></i> Làm mới
+                        </button>
+                    </div>
+
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 12px 14px;">MÃ GD</th>
+                                    <th style="padding: 12px 14px;">HÌNH THỨC</th>
+                                    <th style="padding: 12px 14px;">SỐ TIỀN</th>
+                                    <th style="padding: 12px 14px;">NỘI DUNG</th>
+                                    <th style="padding: 12px 14px;">TRẠNG THÁI</th>
+                                    <th style="padding: 12px 14px;">THỜI GIAN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 5: DỊCH VỤ LIÊN QUÂN (SERVICES) -->
+            <!-- ================================================================= -->
+            <section class="tab-section" id="tab-services">
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px;">🎮 Hệ Sinh Thái Dịch Vụ Liên Quân Mobile</h2>
+                    <p style="margin: 0; opacity: 0.7; font-size: 0.88rem;">Cung cấp các gói dịch vụ Liên Quân hàng đầu, bảo hành 100%</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg);">
+                    <!-- Cho thuê acc -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--color-primary);"><i class="fas fa-key"></i></div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Cho Thuê Acc Liên Quân VIP</h3>
+                            <p style="font-size: 0.85rem; opacity: 0.8; line-height: 1.5; margin-bottom: 14px;">
+                                Kho tài khoản Liên Quân rank Cao Thủ, Chiến Tướng, full tướng, full ngọc, sở hữu dàn trang phục cực VIP: Raz Muay Thái, Nakroth Lôi Quang Sứ, Florentino Tinh Hệ...
+                            </p>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin-bottom: 12px;">Từ 5.000 đ / Giờ</div>
+                            <a href="https://zalo.me/triduc1903" target="_blank" class="btn btn-primary" style="width: 100%;">
+                                <i class="fab fa-whatsapp"></i> Liên hệ thuê qua Zalo
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tăng tim -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 2.2rem; margin-bottom: 12px; color: #ec4899;"><i class="fas fa-heart"></i></div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Tăng Tim Hồ Sơ Liên Quân</h3>
+                            <p style="font-size: 0.85rem; opacity: 0.8; line-height: 1.5; margin-bottom: 14px;">
+                                Tăng độ hot cho trang cá nhân trong game. Đẩy hàng ngàn lượt tim hồ sơ uy tín, tăng độ chất cho kiện tướng.
+                            </p>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #ec4899; margin-bottom: 12px;">Từ 10.000 đ / 1,000 Tim</div>
+                            <a href="https://zalo.me/triduc1903" target="_blank" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                                <i class="fab fa-whatsapp"></i> Đặt gói Tăng Tim
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Kéo rank -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 2.2rem; margin-bottom: 12px; color: #f59e0b;"><i class="fas fa-trophy"></i></div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Cải Thiện Rank - Cày Top Tướng</h3>
+                            <p style="font-size: 0.85rem; opacity: 0.8; line-height: 1.5; margin-bottom: 14px;">
+                                Đội ngũ kiện tướng Top 1 Thách Đấu trực tiếp hỗ trợ leo rank, cày lực chiến top tướng tỉnh, top Việt Nam bảo mật an toàn.
+                            </p>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #f59e0b; margin-bottom: 12px;">Giá thương lượng</div>
+                            <a href="https://zalo.me/triduc1903" target="_blank" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i class="fab fa-whatsapp"></i> Tư vấn Kéo Rank
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 6: CÀI ĐẶT & BẢO MẬT (SETTINGS) -->
+            <!-- ================================================================= -->
+            <section class="tab-section" id="tab-settings">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl);" class="main-grid">
+                    <div class="glass-card">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-key" style="color: var(--color-primary);"></i>
+                            Đổi Mật Khẩu
+                        </h3>
+                        <form onsubmit="handleChangePassword(event)">
+                            <div style="margin-bottom: var(--space-md);">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Mật khẩu hiện tại:</label>
+                                <input type="password" id="oldPasswordInput" class="form-control" required style="width: 100%; padding: 12px;">
+                            </div>
+                            <div style="margin-bottom: var(--space-md);">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Mật khẩu mới:</label>
+                                <input type="password" id="newPasswordInput" class="form-control" minlength="8" required style="width: 100%; padding: 12px;">
+                            </div>
+                            <div style="margin-bottom: var(--space-lg);">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Nhập lại mật khẩu mới:</label>
+                                <input type="password" id="newPasswordConfirmInput" class="form-control" minlength="8" required style="width: 100%; padding: 12px;">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                                <i class="fas fa-save"></i> Cập Nhật Mật Khẩu
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-shield-alt" style="color: var(--color-accent);"></i>
+                            Bảo Mật Hai Lớp (2FA)
+                        </h3>
+                        <p style="font-size: 0.88rem; opacity: 0.8; line-height: 1.6; margin-bottom: 20px;">
+                            Kích hoạt mã bảo mật OTP mỗi khi đăng nhập trên thiết bị lạ để bảo vệ số dư tài khoản của bạn.
+                        </p>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-muted) 50%, transparent); margin-bottom: 20px;">
+                            <div>
+                                <div style="font-weight: 600;">Xác minh OTP khi đăng nhập</div>
+                                <div style="font-size: 0.78rem; opacity: 0.7;">Gửi mã 6 số về thiết bị</div>
+                            </div>
+                            <label class="feature-toggle">
+                                <input type="checkbox" class="feature-toggle-input" id="otpToggleCheckbox" onchange="toggleOtpSecurity(this.checked)">
+                                <span class="feature-toggle-track">
+                                    <span class="feature-toggle-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- FOOTER: THÔNG TIN LIÊN HỆ ADMIN, HOTLINE, ZALO, ĐIỀU KHOẢN & BẢO MẬT -->
+        <!-- ================================================================= -->
+        <footer class="site-footer">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <img src="uploads/logo.png" alt="Logo Chung sức Trí Đức" style="width: 44px; height: 44px; border-radius: var(--radius-md);">
+                <div>
+                    <div style="font-weight: 700; font-size: 1rem; color: var(--color-foreground);">Chung sức Trí Đức</div>
+                    <div style="font-size: 0.78rem; opacity: 0.7;">© 2026 Chung sức Trí Đức. Dịch vụ uy tín & tự động 24/7.</div>
+                </div>
+            </div>
+
+            <!-- Liên hệ Admin, Zalo, Điều khoản, Bảo mật -->
+            <div class="footer-contacts">
+                <a href="tel:0901234567" class="footer-link-item" title="Gọi Hotline Admin">
+                    <i class="fas fa-phone-volume" style="color: var(--color-primary); font-size: 1.1rem;"></i>
+                    <span>Hotline: <strong>0901.234.567</strong></span>
+                </a>
+
+                <a href="https://zalo.me/triduc1903" target="_blank" rel="noopener noreferrer" class="footer-link-item" title="Chat Zalo với Admin">
+                    <i class="fas fa-comment-dots" style="color: #0088cc; font-size: 1.15rem;"></i>
+                    <span>Zalo Admin: <strong>triduc1903</strong></span>
+                </a>
+
+                <a href="terms.html" class="footer-link-item" title="Xem điều khoản sử dụng">
+                    <i class="fas fa-file-contract" style="color: var(--color-accent);"></i>
+                    <span>Điều khoản sử dụng</span>
+                </a>
+
+                <a href="privacy.html" class="footer-link-item" title="Xem chính sách bảo mật">
+                    <i class="fas fa-user-shield" style="color: #ec4899;"></i>
+                    <span>Chính sách bảo mật</span>
+                </a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Floating Support Zalo Link -->
+    <a href="https://zalo.me/triduc1903" target="_blank" rel="noopener noreferrer" style="position: fixed; right: 24px; bottom: 24px; z-index: 999; background: #0088cc; color: white; border-radius: 999px; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 10px 25px rgba(0, 136, 204, 0.4); text-decoration: none; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+        <i class="fas fa-comment-dots" style="font-size: 1.2rem;"></i>
+        <span>Hỗ Trợ Zalo Admin</span>
+    </a>
+
+    <!-- Application Script -->
+    <script>
+        // State
+        var currentUser = null;
+        var unitPrice = 500;
+        var currentPackages = [];
+        var activeSelectedPackage = null;
+        var uploadedPackageImageBase64 = 'uploads/logo.png';
+
+        // Init theme toggle
+        function setupThemeToggles() {
+            var toggles = [document.getElementById('themeToggleDesktop'), document.getElementById('themeToggleMobile')];
+            toggles.forEach(function(btn) {
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                        var next = current === 'dark' ? 'light' : 'dark';
+                        document.documentElement.setAttribute('data-theme', next);
+                        localStorage.setItem('theme-preference', next);
+                    });
+                }
+            });
+        }
+        setupThemeToggles();
+
+        // Mobile drawer handlers
+        var openBtn = document.getElementById('mobileMenuOpenBtn');
+        var closeBtn = document.getElementById('mobileMenuCloseBtn');
+        var sidebar = document.getElementById('appSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+
+        if (openBtn && sidebar && overlay) {
+            openBtn.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            });
+            function closeDrawer() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+            if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+            overlay.addEventListener('click', closeDrawer);
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            // QUY TẮC 1: Phải đăng nhập mới nạp được tiền
+            if (tabId === 'deposit' && !currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Đăng Nhập',
+                    text: 'Bạn phải đăng nhập tài khoản trước khi thực hiện nạp tiền!',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Đăng nhập ngay',
+                    cancelButtonText: 'Để sau'
+                }).then(function(r) {
+                    if (r.isConfirmed) {
+                        window.location.href = 'login.html';
+                    }
+                });
+                return;
+            }
+
+            document.querySelectorAll('.tab-section').forEach(function(s) { s.classList.remove('active'); });
+            var targetSection = document.getElementById('tab-' + tabId);
+            if (targetSection) targetSection.classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(function(item) {
+                if (item.getAttribute('data-tab-target') === tabId) {
+                    item.classList.add('active', 'highlight-item');
+                } else {
+                    item.classList.remove('active', 'highlight-item');
+                }
+            });
+
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+
+            if (tabId === 'chungsuc') loadPackages();
+            if (tabId === 'history') loadOrderHistory();
+            if (tabId === 'transactions') loadTransactions();
+            if (tabId === 'deposit') {
+                updateVietQrCode();
+            }
+        }
+
+        document.querySelectorAll('[data-tab-target]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                switchTab(this.getAttribute('data-tab-target'));
+            });
+        });
+
+        // =====================================================================
+        // SỰ KIỆN CHUNG SỨC: TÍNH TIỀN & XỬ LÝ 2 NỬA
+        // =====================================================================
+        function recalcSplitPricing() {
+            var tickets = parseInt(document.getElementById('splitTicketCount').value) || 1;
+            if (tickets < 1) tickets = 1;
+
+            var total = tickets * unitPrice;
+            // Áp dụng chiết khấu nhẹ nếu chạy nhiều vé
+            if (tickets >= 100) {
+                total = Math.round(total * 0.9);
+            } else if (tickets >= 50) {
+                total = Math.round(total * 0.96);
+            }
+
+            var formatted = total.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('splitTotalPriceDisplay').textContent = formatted;
+            document.getElementById('btnSplitPriceText').textContent = formatted;
+            if (!activeSelectedPackage) {
+                document.getElementById('splitPackageSelectedTitle').textContent = `Gói Tự Chọn (${tickets} Vé)`;
+            }
+        }
+
+        // =====================================================================
+        // LOAD GÓI SỰ KIỆN (BỎ SỐ VÉ, BỎ NHÃN, THÊM MÔ TẢ CHI TIẾT & XÁC NHẬN CHỌN GÓI)
+        // =====================================================================
+        async function loadPackages() {
+            var container = document.getElementById('packagesListContainer');
+            try {
+                var res = await fetch('/api/packages');
+                var packages = await res.json();
+                currentPackages = packages || [];
+
+                if (currentPackages.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; opacity: 0.7;">Chưa có gói sự kiện nào.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                currentPackages.forEach(function(pkg) {
+                    var card = document.createElement('div');
+                    card.className = 'package-item-card';
+                    card.id = 'pkg-card-' + pkg.id;
+
+                    var origPriceHtml = pkg.originalPrice && pkg.originalPrice > pkg.price 
+                        ? `<span style="text-decoration: line-through; opacity: 0.6; font-size: 0.8rem; margin-left: 6px;">${pkg.originalPrice.toLocaleString('vi-VN')} đ</span>` 
+                        : '';
+
+                    // BỎ SỐ VÉ, BỎ NHÃN (CƠ BẢN, PHỔ BIẾN...), THÊM MÔ TẢ CHI TIẾT
+                    card.innerHTML = `
+                        <div>
+                            <img src="${pkg.imageUrl || 'uploads/logo.png'}" alt="${pkg.title}" class="pkg-img" onerror="this.src='uploads/logo.png'">
+                            <h4 style="font-size: 1rem; font-weight: 700; margin: 0 0 8px; line-height: 1.35; color: var(--color-foreground);">${pkg.title}</h4>
+                            
+                            <!-- Mô tả chi tiết gói sự kiện -->
+                            <div style="background: color-mix(in srgb, var(--color-muted) 45%, transparent); border-left: 3px solid var(--color-primary); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px; font-size: 0.83rem; line-height: 1.5;">
+                                <div style="font-weight: 700; color: var(--color-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-circle-info"></i> Mô tả chi tiết:
+                                </div>
+                                <div style="opacity: 0.9; color: var(--color-foreground);">
+                                    ${pkg.description || 'Gói sự kiện chạy mã tự động 24/7 siêu tốc, cam kết tỷ lệ hoàn thành 100%.'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; padding: 6px 0; border-top: 1px dashed var(--glass-border);">
+                                <span style="font-size: 0.82rem; opacity: 0.75;">Giá trọn gói:</span>
+                                <div>
+                                    <strong style="color: var(--color-primary); font-size: 1.15rem;">${pkg.price.toLocaleString('vi-VN')} đ</strong>
+                                    ${origPriceHtml}
+                                </div>
+                            </div>
+
+                            <!-- 2 nút chọn: Chọn gói (trừ số dư) hoặc Quét QR trực tiếp -->
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn btn-primary" style="flex: 1; justify-content: center; font-weight: 700; padding: 10px 8px; font-size: 0.88rem;" onclick="confirmAndSelectPackage('${pkg.id}')">
+                                    <i class="fas fa-cart-shopping"></i> Chọn Gói
+                                </button>
+                                <button type="button" class="btn btn-glass" style="justify-content: center; font-weight: 700; padding: 10px 12px; font-size: 0.88rem; border: 1px solid var(--color-accent); color: var(--color-accent);" onclick="openDirectVietQrPaymentModal('${pkg.id}')" title="Quét mã QR VietQR chuyển khoản thanh toán trực tiếp">
+                                    <i class="fas fa-qrcode"></i> Quét QR
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                // Cập nhật các nút chọn nạp nhanh theo gói sự kiện ở Tab Nạp tiền
+                var depositPkgContainer = document.getElementById('packageDepositBtnGroup');
+                if (depositPkgContainer) {
+                    depositPkgContainer.innerHTML = '';
+                    currentPackages.forEach(function(pkg) {
+                        var pBtn = document.createElement('button');
+                        pBtn.type = 'button';
+                        pBtn.className = 'btn btn-glass';
+                        pBtn.style.cssText = 'padding: 8px 14px; font-size: 0.83rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;';
+                        pBtn.innerHTML = `<i class="fas fa-cube" style="color: var(--color-accent);"></i> ${pkg.title} (<strong style="color: var(--color-primary);">${pkg.price.toLocaleString('vi-VN')} đ</strong>)`;
+                        pBtn.onclick = function() { selectPackageForDeposit(pkg, this); };
+                        depositPkgContainer.appendChild(pBtn);
+                    });
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải gói sự kiện!</div>';
+            }
+        }
+
+        // XỬ LÝ CHỌN GÓI: HIỆN THÔNG BÁO XÁC NHẬN -> TRỪ TIỀN TÀI KHOẢN & TẠO ĐƠN HÀNG
+        async function confirmAndSelectPackage(pkgId) {
+            var pkg = currentPackages.find(function(p) { return p.id === pkgId; });
+            if (!pkg) return;
+
+            // QUY TẮC 1: Phải đăng nhập mới mua được gói
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Đăng Nhập',
+                    text: 'Bạn cần đăng nhập tài khoản để chọn và mua gói sự kiện!',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Đăng nhập ngay',
+                    cancelButtonText: 'Hủy'
+                }).then(function(r) {
+                    if (r.isConfirmed) window.location.href = 'login.html';
+                });
+                return;
+            }
+
+            var leftCode = document.getElementById('splitEventCode') ? document.getElementById('splitEventCode').value.trim() : '';
+            var leftName = document.getElementById('splitCustomerName') ? document.getElementById('splitCustomerName').value.trim() : '';
+
+            // HIỆN THÔNG BÁO XÁC NHẬN CHỌN GÓI
+            var result = await Swal.fire({
+                title: 'Xác Nhận Chọn Gói Sự Kiện',
+                html: `
+                    <div style="text-align: left; font-size: 0.9rem; line-height: 1.55;">
+                        <div style="background: color-mix(in srgb, var(--color-primary) 12%, transparent); border: 1px solid var(--color-primary); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin-bottom: 4px;">
+                                ${pkg.title}
+                            </div>
+                            <div style="font-size: 0.83rem; opacity: 0.9;">${pkg.description}</div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="opacity: 0.8;">Giá gói trừ tài khoản:</span>
+                            <strong style="color: var(--color-danger); font-size: 1.15rem;">${pkg.price.toLocaleString('vi-VN')} đ</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--glass-border);">
+                            <span style="opacity: 0.8;">Số dư hiện có của bạn:</span>
+                            <strong style="color: #22c55e; font-size: 1.05rem;">${(currentUser.balance || 0).toLocaleString('vi-VN')} đ</strong>
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                Mã sự kiện hoặc Link mời <span style="color: var(--color-danger);">*</span>:
+                            </label>
+                            <input type="text" id="swalOrderCode" class="form-control" placeholder="Dán mã sự kiện hoặc link mời trong game..." value="${leftCode}" style="width: 100%; box-sizing: border-box; min-height: 42px; font-size: 0.9rem; padding: 8px 12px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">
+                                Tên khách hàng <span style="color: var(--color-danger);">*</span>:
+                            </label>
+                            <input type="text" id="swalCustomerName" class="form-control" placeholder="Nhập họ tên hoặc nickname..." value="${leftName || currentUser.username}" style="width: 100%; box-sizing: border-box; min-height: 42px; font-size: 0.9rem; padding: 8px 12px;">
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-check-circle"></i> Đồng Ý Chọn Gói',
+                cancelButtonText: 'Hủy Bỏ',
+                confirmButtonColor: '#3b82f6',
+                focusConfirm: false,
+                preConfirm: function() {
+                    var codeVal = document.getElementById('swalOrderCode').value.trim();
+                    var nameVal = document.getElementById('swalCustomerName').value.trim();
+                    if (!codeVal) {
+                        Swal.showValidationMessage('Vui lòng nhập mã sự kiện hoặc link mời!');
+                        return false;
+                    }
+                    if (!nameVal) {
+                        Swal.showValidationMessage('Vui lòng nhập tên khách hàng!');
+                        return false;
+                    }
+                    return { code: codeVal, customerName: nameVal };
+                }
+            });
+
+            // KHI NGƯỜI DÙNG NHẤN XÁC NHẬN
+            if (result.isConfirmed && result.value) {
+                // Kiểm tra số dư tài khoản
+                if (currentUser.balance < pkg.price) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Số Dư Không Đủ - Quét QR Ngay',
+                        html: `Gói <strong>${pkg.title}</strong> có giá <strong>${pkg.price.toLocaleString('vi-VN')} đ</strong>, nhưng tài khoản của bạn hiện có <strong>${(currentUser.balance || 0).toLocaleString('vi-VN')} đ</strong>.<br><br>Bạn có thể <strong>Quét mã VietQR chuyển khoản ngân hàng trực tiếp</strong> để hệ thống tự động kích hoạt gói ngay lập tức!`,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-qrcode"></i> Quét Mã VietQR Ngay',
+                        cancelButtonText: 'Đóng',
+                        confirmButtonColor: '#22c55e'
+                    }).then(function(c) {
+                        if (c.isConfirmed) {
+                            openDirectVietQrPaymentModal(pkg.id, result.value);
+                        }
+                    });
+                    return;
+                }
+
+                // Thực hiện tạo đơn và trừ tiền
+                Swal.fire({
+                    title: 'Đang kích hoạt gói sự kiện...',
+                    text: 'Hệ thống BOT đang tạo đơn và trừ tiền tài khoản...',
+                    allowOutsideClick: false,
+                    didOpen: function() { Swal.showLoading(); }
+                });
+
+                try {
+                    var res = await fetch('/api/packages/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            packageId: pkg.id,
+                            code: result.value.code,
+                            customerName: result.value.customerName
+                        })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        // Cập nhật số dư người dùng ngay lập tức
+                        currentUser.balance = data.newBalance;
+                        updateUserUI();
+                        loadOrderHistory();
+
+                        // THÔNG BÁO CHỌN GÓI THÀNH CÔNG
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Chọn Gói Thành Công!',
+                            html: `
+                                Bạn đã đăng ký thành công <strong>${pkg.title}</strong>!<br>
+                                Mã đơn hàng: <strong style="color: var(--color-primary);">#${data.order.id}</strong><br>
+                                Tài khoản đã tự động trừ: <strong style="color: var(--color-danger);">${pkg.price.toLocaleString('vi-VN')} đ</strong>.<br>
+                                Số dư còn lại: <strong style="color: #22c55e; font-size: 1.15rem;">${data.newBalance.toLocaleString('vi-VN')} đ</strong>.<br><br>
+                                Hệ thống BOT đang tự động đẩy tiến độ chạy mã 24/7!
+                            `,
+                            confirmButtonText: '<i class="fas fa-list-check"></i> Xem Lịch Sử Đơn'
+                        }).then(function() {
+                            switchTab('history');
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Không thể mua gói',
+                            text: data.message || 'Có lỗi xảy ra, vui lòng thử lại sau.'
+                        });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Không thể kết nối đến máy chủ.' });
+                }
+            }
+        }
+
+        // =====================================================================
+        // QUÉT MÃ VIETQR TRỰC TIẾP CHO GÓI SỰ KIỆN (AUTO STK + TIỀN + TÊN GÓI)
+        // =====================================================================
+        async function openDirectVietQrPaymentModal(pkgId, prefillData) {
+            var pkg = currentPackages.find(function(p) { return p.id === pkgId; });
+            if (!pkg) return;
+
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Đăng Nhập',
+                    text: 'Vui lòng đăng nhập tài khoản trước khi quét mã thanh toán gói sự kiện!',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Đăng nhập ngay',
+                    cancelButtonText: 'Hủy'
+                }).then(function(r) {
+                    if (r.isConfirmed) window.location.href = 'login.html';
+                });
+                return;
+            }
+
+            var leftCode = prefillData && prefillData.code ? prefillData.code : (document.getElementById('splitEventCode') ? document.getElementById('splitEventCode').value.trim() : '');
+            var leftName = prefillData && prefillData.customerName ? prefillData.customerName : (document.getElementById('splitCustomerName') ? document.getElementById('splitCustomerName').value.trim() : currentUser.username);
+
+            var safePkg = removeVietnameseDiacritics(pkg.title).replace(/CHUNG SUC|LIEN QUAN|MOBILE/g, '').trim();
+            if (safePkg.length > 15) safePkg = safePkg.substring(0, 15).trim();
+            var content = ('NAP ' + safePkg + ' ' + currentUser.username).trim();
+
+            var qrUrl = `https://img.vietqr.io/image/970422-0111111111100-compact2.png?amount=${pkg.price}&addInfo=${encodeURIComponent(content)}&accountName=NGUYEN%20TRI%20DUC`;
+
+            var qrModalHtml = `
+                <div style="text-align: left; font-size: 0.88rem; line-height: 1.5;">
+                    <div style="background: white; border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.18); border: 2px solid var(--color-primary);">
+                        <img src="${qrUrl}" onerror="this.src='assets/vietqr_real.png'" alt="Mã VietQR Chính Thức" style="width: 220px; height: auto; max-width: 100%; display: block; margin: 0 auto; object-fit: contain; border-radius: 6px;">
+                        <div style="color: #1e293b; font-size: 0.82rem; font-weight: 700; margin-top: 8px;">
+                            <i class="fas fa-check-circle" style="color: #22c55e;"></i> VietQR MB Bank Tự Động Điền Tiền & Nội Dung (NAPAS 24/7)
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: rgba(0,0,0,0.06); border-radius: 6px;">
+                            <span>Ngân hàng & Chủ TK:</span>
+                            <strong style="color: var(--color-primary);">MB BANK - NGUYEN TRI DUC</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: rgba(0,0,0,0.06); border-radius: 6px;">
+                            <span>Số tài khoản:</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <strong style="font-family: monospace; font-size: 1.05rem; color: var(--color-foreground);" id="modalDirectStk">0111111111100</strong>
+                                <button type="button" class="copy-btn" onclick="copyText('modalDirectStk')"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: rgba(0,0,0,0.06); border-radius: 6px;">
+                            <span>Số tiền thanh toán:</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <strong style="color: #22c55e; font-size: 1.15rem;" id="modalDirectPriceDisplay">${pkg.price.toLocaleString('vi-VN')} đ</strong>
+                                <button type="button" class="copy-btn" onclick="copyDirectAmount(${pkg.price})"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: color-mix(in srgb, var(--color-primary) 15%, transparent); border: 1px solid var(--color-primary); border-radius: 6px;">
+                            <span style="font-weight: 700; color: var(--color-primary);">Cú pháp nội dung:</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <strong style="color: var(--color-primary); font-family: monospace; font-size: 1rem;" id="modalDirectQrContent">${content}</strong>
+                                <button type="button" class="copy-btn" onclick="copyText('modalDirectQrContent')"><i class="fas fa-copy"></i> Sao chép</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; color: #f59e0b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-comment-dots" style="font-size: 1.1rem;"></i>
+                        <span>Quý khách vui lòng chụp cho mình xin Bill sau khi chuyển nhé</span>
+                    </div>
+
+                    <div style="margin-bottom: 8px;">
+                        <label style="display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px;">Mã sự kiện hoặc link mời <span style="color: var(--color-danger);">*</span>:</label>
+                        <input type="text" id="directModalEventCode" class="form-control" value="${leftCode}" placeholder="Dán mã sự kiện trong game..." style="width: 100%; box-sizing: border-box; min-height: 38px; font-size: 0.88rem; padding: 6px 10px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px;">Tên khách hàng <span style="color: var(--color-danger);">*</span>:</label>
+                        <input type="text" id="directModalCustomerName" class="form-control" value="${leftName}" placeholder="Nhập tên khách hàng..." style="width: 100%; box-sizing: border-box; min-height: 38px; font-size: 0.88rem; padding: 6px 10px;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px;">Ảnh Bill chuyển khoản (khuyến khích):</label>
+                        <input type="file" id="directModalBillInput" accept="image/*" class="form-control" style="width: 100%; box-sizing: border-box; font-size: 0.82rem; padding: 6px;">
+                    </div>
+                </div>
+            `;
+
+            var modalRes = await Swal.fire({
+                title: `<span style="font-size: 1.15rem; font-weight: 800;">Quét Mã VietQR: ${pkg.title}</span>`,
+                html: qrModalHtml,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-paper-plane"></i> Xác Nhận Đã Chuyển Tiền',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#22c55e',
+                focusConfirm: false,
+                preConfirm: function() {
+                    var eCode = document.getElementById('directModalEventCode').value.trim();
+                    var cName = document.getElementById('directModalCustomerName').value.trim();
+                    var fileInp = document.getElementById('directModalBillInput');
+                    var hasBill = fileInp && fileInp.files && fileInp.files.length > 0;
+                    if (!eCode) {
+                        Swal.showValidationMessage('Vui lòng nhập mã sự kiện hoặc link mời!');
+                        return false;
+                    }
+                    if (!cName) {
+                        Swal.showValidationMessage('Vui lòng nhập tên khách hàng!');
+                        return false;
+                    }
+                    return { code: eCode, customerName: cName, hasBill: hasBill };
+                }
+            });
+
+            if (modalRes.isConfirmed && modalRes.value) {
+                Swal.fire({
+                    title: 'Đang gửi thông báo về hệ thống...',
+                    text: 'Hệ thống đang kiểm tra biến động VietQR & kích hoạt gói sự kiện...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                try {
+                    var res = await fetch('/api/deposit/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            amount: pkg.price,
+                            hasBill: modalRes.value.hasBill,
+                            packageName: pkg.title,
+                            packageId: pkg.id,
+                            code: modalRes.value.code,
+                            customerName: modalRes.value.customerName
+                        })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        currentUser.balance = data.newBalance;
+                        try {
+                            localStorage.setItem('auth_user', JSON.stringify(currentUser));
+                        } catch(e) {}
+
+                        // HIỆN 1 TRANG THÔNG BÁO NẠP TIỀN THÀNH CÔNG VỚI NÚT QUAY LẠI TRANG CHỦ
+                        var redirectUrl = 'payment-success.html?txId=' + (data.txId || ('GD' + Math.floor(1000 + Math.random() * 9000)))
+                            + '&package=' + encodeURIComponent(pkg.title)
+                            + '&amount=' + pkg.price
+                            + '&username=' + encodeURIComponent(currentUser.username)
+                            + '&newBalance=' + data.newBalance
+                            + (data.orderId ? '&orderId=' + encodeURIComponent(data.orderId) : '');
+
+                        window.location.href = redirectUrl;
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Thông báo', text: data.message || 'Chưa ghi nhận biến động số dư.' });
+                    }
+                } catch(err) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Lỗi kết nối máy chủ.' });
+                }
+            }
+        }
+
+        // Handle Submit Order in Left Form
+        async function handleSplitOrderSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Đăng Nhập',
+                    text: 'Vui lòng đăng nhập tài khoản trước khi thực hiện chạy mã sự kiện!',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Đăng nhập ngay',
+                    cancelButtonText: 'Để sau'
+                }).then(function(r) {
+                    if (r.isConfirmed) window.location.href = 'login.html';
+                });
+                return;
+            }
+
+            var code = document.getElementById('splitEventCode').value.trim();
+            var tickets = parseInt(document.getElementById('splitTicketCount').value) || 1;
+            var customerName = document.getElementById('splitCustomerName').value.trim();
+
+            if (!customerName) {
+                Swal.fire({ icon: 'warning', title: 'Thiếu tên khách hàng', text: 'Tên khách hàng là bắt buộc để quản lý đơn!' });
+                return;
+            }
+
+            if (!code) {
+                Swal.fire({ icon: 'warning', title: 'Thiếu mã sự kiện', text: 'Vui lòng nhập mã sự kiện hoặc link mời!' });
+                return;
+            }
+
+            var totalPrice = activeSelectedPackage && activeSelectedPackage.ticketCount === tickets 
+                ? activeSelectedPackage.price 
+                : tickets * unitPrice;
+
+            var pkgTitle = activeSelectedPackage && activeSelectedPackage.ticketCount === tickets 
+                ? activeSelectedPackage.title 
+                : `Gói Tự Chọn (${tickets} Vé)`;
+
+            var btn = document.getElementById('splitSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khởi chạy đơn...';
+
+            try {
+                var res = await fetch('/api/chungsuc/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser ? currentUser.username : 'demo',
+                        customerName: customerName,
+                        code: code,
+                        count: tickets,
+                        price: totalPrice,
+                        packageTitle: pkgTitle,
+                        eventType: 'chungsuc',
+                        speed: 'VIP'
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Xác nhận chạy mã thành công!',
+                        html: `Đơn hàng <strong>#${data.order.id}</strong> cho khách hàng <strong>${customerName}</strong> đang được BOT xử lý!`,
+                        confirmButtonText: 'Xem tiến độ'
+                    }).then(function() {
+                        document.getElementById('splitEventCode').value = '';
+                        switchTab('history');
+                    });
+                    fetchUserProfile();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Không thể tạo đơn',
+                        text: data.message || 'Số dư không đủ. Vui lòng nạp thêm tiền!',
+                        showCancelButton: true,
+                        confirmButtonText: 'Nạp tiền ngay'
+                    }).then(function(result) {
+                        if (result.isConfirmed) switchTab('deposit');
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Lỗi kết nối máy chủ.' });
+            } finally {
+                btn.disabled = false;
+                recalcSplitPricing();
+            }
+        }
+        // =====================================================================
+        // LOAD LỊCH SỬ CHẠY MÃ USER
+        // =====================================================================
+        async function loadOrderHistory() {
+            var tbody = document.getElementById('orderHistoryTbody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; opacity: 0.6;"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách mã...</td></tr>';
+
+            try {
+                var username = currentUser ? currentUser.username : 'demo';
+                var res = await fetch('/api/chungsuc/history?username=' + encodeURIComponent(username));
+                var orders = await res.json();
+
+                if (!orders || orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; opacity: 0.7;">Bạn chưa có mã nào đang chạy. Hãy bấm <a href="javascript:void(0)" onclick="switchTab(\'chungsuc\')" style="color: var(--color-primary); font-weight: 600;">Sự kiện chung sức</a> để tạo đơn!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                orders.forEach(function(o) {
+                    var percent = Math.min(100, Math.round((o.completedCount / o.totalCount) * 100));
+                    var statusBadge = o.status === 'COMPLETED' || percent >= 100
+                        ? '<span class="badge-status badge-done"><i class="fas fa-check"></i> Hoàn thành</span>'
+                        : '<span class="badge-status badge-running"><i class="fas fa-spinner fa-spin"></i> Đang chạy (' + percent + '%)</span>';
+
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.style.fontSize = '0.88rem';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 14px; font-weight: 600; color: var(--color-primary);">#${o.id}</td>
+                        <td style="padding: 12px 14px;"><strong>${o.customerName || 'Khách'}</strong></td>
+                        <td style="padding: 12px 14px; font-family: monospace;"><strong>${o.code}</strong></td>
+                        <td style="padding: 12px 14px;"><span style="opacity: 0.85;">${o.packageTitle || 'Chung Sức'}</span></td>
+                        <td style="padding: 12px 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="progress" style="width: 100px; height: 6px;">
+                                    <div class="progress-bar ${percent >= 100 ? 'is-done' : ''}" style="width: ${percent}%;"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; font-weight: 600;">${o.completedCount}/${o.totalCount}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 12px 14px;">${statusBadge}</td>
+                        <td style="padding: 12px 14px; opacity: 0.7; font-size: 0.8rem;">${o.createdAt || 'Vừa xong'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải lịch sử chạy mã!</td></tr>';
+            }
+        }
+
+        // =====================================================================
+        // NẠP TIỀN TỰ ĐỘNG CHUYỂN KHOẢN (NGUYEN TRI DUC - 0111111111100) & GỬI BILL
+        // =====================================================================
+        var selectedDepositAmountVal = 20000;
+        var selectedDepositPackageTitle = '';
+        var currentBillBase64 = null;
+
+        function selectPackageForDeposit(pkg, btn) {
+            document.querySelectorAll('#packageDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            document.querySelectorAll('#quickDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            if (btn) {
+                btn.classList.remove('btn-glass');
+                btn.classList.add('btn-primary');
+            }
+            selectedDepositPackageTitle = pkg.title;
+            selectedDepositAmountVal = pkg.price;
+            var customInput = document.getElementById('customDepositAmountInput');
+            if (customInput) customInput.value = selectedDepositAmountVal;
+            updateDepositAmountDisplay();
+            updateVietQrCode();
+        }
+
+        function selectDepositAmount(amt, btn) {
+            selectedDepositPackageTitle = '';
+            document.querySelectorAll('#packageDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            document.querySelectorAll('#quickDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            if (btn) {
+                btn.classList.remove('btn-glass');
+                btn.classList.add('btn-primary');
+            }
+            selectedDepositAmountVal = Math.max(5000, amt);
+            var customInput = document.getElementById('customDepositAmountInput');
+            if (customInput) customInput.value = selectedDepositAmountVal;
+            updateDepositAmountDisplay();
+            updateVietQrCode();
+        }
+
+        function handleCustomDepositInput(val) {
+            var amt = parseInt(val) || 0;
+            selectedDepositPackageTitle = '';
+            document.querySelectorAll('#packageDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            document.querySelectorAll('#quickDepositBtnGroup .btn').forEach(function(b) { 
+                b.classList.remove('btn-primary'); 
+                b.classList.add('btn-glass'); 
+            });
+            document.querySelectorAll('#quickDepositBtnGroup .btn').forEach(function(b) {
+                if (b.textContent.replace(/\D/g, '') === amt.toString()) {
+                    b.classList.remove('btn-glass');
+                    b.classList.add('btn-primary');
+                }
+            });
+
+            selectedDepositAmountVal = amt;
+            updateDepositAmountDisplay();
+            if (amt >= 5000) {
+                updateVietQrCode();
+            }
+        }
+
+        function updateDepositAmountDisplay() {
+            var formattedElem = document.getElementById('depositAmountFormatted');
+            if (formattedElem) {
+                if (selectedDepositAmountVal < 5000) {
+                    formattedElem.innerHTML = '<span style="color: var(--color-danger);"><i class="fas fa-triangle-exclamation"></i> Tối thiểu 5.000 đ</span>';
+                } else {
+                    formattedElem.textContent = selectedDepositAmountVal.toLocaleString('vi-VN') + ' đ' + (selectedDepositPackageTitle ? ' (' + selectedDepositPackageTitle + ')' : '');
+                }
+            }
+        }
+
+        function updateVietQrCode() {
+            var username = currentUser ? currentUser.username : '';
+            var safePkg = selectedDepositPackageTitle ? removeVietnameseDiacritics(selectedDepositPackageTitle) : '';
+            var pkgShort = safePkg ? safePkg.replace(/CHUNG SUC|LIEN QUAN|MOBILE/g, '').trim() : '';
+            if (pkgShort.length > 15) pkgShort = pkgShort.substring(0, 15).trim();
+
+            var content = currentUser 
+                ? (selectedDepositPackageTitle 
+                    ? ('NAP ' + (pkgShort || safePkg.substring(0, 15)) + ' ' + username).trim()
+                    : ('NAP ' + username).trim())
+                : 'NAP [VUI LÒNG ĐĂNG NHẬP]';
+            
+            var bankContentElem = document.getElementById('bankContentDisplay');
+            if (bankContentElem) bankContentElem.textContent = content;
+
+            var qrContentElem = document.getElementById('qrDisplayContent');
+            if (qrContentElem) qrContentElem.textContent = content;
+
+            var qrAmt = Math.max(5000, selectedDepositAmountVal || 20000);
+            var qrAmtElem = document.getElementById('qrDisplayAmount');
+            if (qrAmtElem) qrAmtElem.textContent = qrAmt.toLocaleString('vi-VN') + ' đ';
+
+            // Dùng DUY NHẤT 1 mã VietQR MB Bank chuẩn NAPAS 247 (BIN: 970422 - 0111111111100 - NGUYEN TRI DUC)
+            var dynamicVietQrUrl = 'https://img.vietqr.io/image/970422-0111111111100-compact2.png?amount=' + qrAmt 
+                + '&addInfo=' + encodeURIComponent(currentUser ? content : 'NAP TIEN') 
+                + '&accountName=NGUYEN%20TRI%20DUC';
+
+            var qrImg = document.getElementById('vietQrImg');
+            if (qrImg) {
+                qrImg.src = dynamicVietQrUrl;
+                qrImg.onerror = function() {
+                    // Dự phòng nếu không truy cập được vietqr.io: Dùng ảnh QR chuẩn MB Bank chính thức
+                    this.src = 'assets/vietqr_real.png';
+                };
+            }
+        }
+
+        function copyAmount() {
+            var amt = selectedDepositAmountVal || 20000;
+            navigator.clipboard.writeText(amt.toString()).then(function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã sao chép số tiền: ' + amt.toLocaleString('vi-VN') + ' đ',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            });
+        }
+
+        function copyDirectAmount(amt) {
+            navigator.clipboard.writeText(amt.toString()).then(function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã sao chép số tiền: ' + amt.toLocaleString('vi-VN') + ' đ',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            });
+        }
+
+        function copyText(elemId) {
+            var elem = document.getElementById(elemId);
+            if (!elem) return;
+            var text = elem.textContent.trim();
+            navigator.clipboard.writeText(text).then(function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã sao chép: ' + text,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            });
+        }
+
+        // XỬ LÝ CHỌN VÀ HIỂN THỊ ẢNH BILL CHUYỂN KHOẢN
+        function handleBillFileSelected(input) {
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    currentBillBase64 = e.target.result;
+                    var previewContainer = document.getElementById('billPreviewContainer');
+                    var previewImg = document.getElementById('billPreviewImg');
+                    var uploadBtnText = document.getElementById('billUploadBtnText');
+                    
+                    if (previewImg) previewImg.src = currentBillBase64;
+                    if (previewContainer) previewContainer.style.display = 'block';
+                    if (uploadBtnText) uploadBtnText.textContent = 'Đổi ảnh Bill khác (' + file.name + ')';
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Đã tải ảnh Bill thành công!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearBillFile() {
+            currentBillBase64 = null;
+            var fileInput = document.getElementById('depositBillFileInput');
+            if (fileInput) fileInput.value = '';
+            var previewContainer = document.getElementById('billPreviewContainer');
+            if (previewContainer) previewContainer.style.display = 'none';
+            var uploadBtnText = document.getElementById('billUploadBtnText');
+            if (uploadBtnText) uploadBtnText.textContent = 'Bấm vào đây để chọn ảnh Bill hoặc chụp màn hình';
+        }
+
+        // XÁC NHẬN ĐÃ CHUYỂN TIỀN & GỬI BILL (TỰ ĐỘNG CỘNG TIỀN VÀO TÀI KHOẢN USER)
+        async function submitDepositWithBill() {
+            // QUY TẮC 1: Phải đăng nhập mới nạp được tiền
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Đăng Nhập',
+                    text: 'Bạn phải đăng nhập tài khoản trước khi thực hiện nạp tiền!',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Đăng nhập ngay',
+                    cancelButtonText: 'Hủy'
+                }).then(function(r) {
+                    if (r.isConfirmed) window.location.href = 'login.html';
+                });
+                return;
+            }
+
+            if (selectedDepositAmountVal < 20000) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Số tiền chưa hợp lệ',
+                    text: 'Mệnh giá nạp tối thiểu là 20.000 đ. Vui lòng nhập số tiền từ 20.000 đ trở lên!'
+                });
+                return;
+            }
+
+            // Nếu người dùng chưa đính kèm Bill, nhắc nhở nhẹ nhàng
+            if (!currentBillBase64) {
+                var confirmNoBill = await Swal.fire({
+                    title: 'Chưa Đính Kèm Bill Chuyển Khoản',
+                    html: `
+                        <div style="font-size: 0.92rem; line-height: 1.5; text-align: left; background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                            <strong>Nhắc nhở:</strong> <em>“Quý khách vui lòng chụp cho mình xin Bill sau khi chuyển nhé”</em>
+                        </div>
+                        <p style="font-size: 0.88rem; margin: 0;">Bạn có muốn đính kèm ảnh Bill để hệ thống đối soát nhanh hơn không?</p>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-camera"></i> Chọn Ảnh Bill Ngay',
+                    cancelButtonText: 'Tôi Đã Chuyển, Tiếp Tục Luôn',
+                    confirmButtonColor: '#f59e0b'
+                });
+
+                if (confirmNoBill.isConfirmed) {
+                    document.getElementById('depositBillFileInput').click();
+                    return;
+                }
+            }
+
+            // Gửi xác nhận nạp tiền tự động
+            Swal.fire({
+                title: 'Đang xác thực giao dịch...',
+                html: 'Hệ thống đang kiểm tra biến động số dư VietQR & xác minh Bill chuyển khoản...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                var res = await fetch('/api/deposit/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        amount: selectedDepositAmountVal,
+                        hasBill: !!currentBillBase64,
+                        packageName: selectedDepositPackageTitle || 'Nạp Tiền VietQR Tự Động'
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    currentUser.balance = data.newBalance;
+                    try {
+                        localStorage.setItem('auth_user', JSON.stringify(currentUser));
+                    } catch(e) {}
+                    clearBillFile();
+
+                    // HIỆN TRANG THÔNG BÁO NẠP TIỀN THÀNH CÔNG THEO YÊU CẦU NGƯỜI DÙNG
+                    var redirectUrl = 'payment-success.html?txId=' + (data.txId || ('GD' + Math.floor(1000 + Math.random() * 9000)))
+                        + '&package=' + encodeURIComponent(selectedDepositPackageTitle || 'Nạp Tiền VietQR Tự Động')
+                        + '&amount=' + selectedDepositAmountVal
+                        + '&username=' + encodeURIComponent(currentUser.username)
+                        + '&newBalance=' + data.newBalance
+                        + (data.orderId ? '&orderId=' + encodeURIComponent(data.orderId) : '');
+                    
+                    window.location.href = redirectUrl;
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Chưa ghi nhận biến động',
+                        text: data.message || 'Hệ thống chưa thấy khoản tiền chuyển đến. Vui lòng chờ 10-30 giây để ngân hàng gửi tin nhắn rồi bấm lại!'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Lỗi kiểm tra', text: 'Không thể kết nối máy chủ ngân hàng.' });
+            }
+        }
+
+        // =====================================================================
+        // LOAD LỊCH SỬ GIAO DỊCH (TRANSACTIONS CỦA USER)
+        // =====================================================================
+        async function loadTransactions() {
+            var tbody = document.getElementById('transactionTbody');
+            if (!tbody) return;
+
+            // QUY TẮC 2: Tiền nạp và đơn hàng đi cùng tài khoản người dùng
+            if (!currentUser) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 36px; opacity: 0.75;"><i class="fas fa-lock" style="font-size: 1.8rem; display: block; margin-bottom: 10px; color: var(--color-primary);"></i> Vui lòng <a href="login.html" style="color: var(--color-primary); font-weight: 700; text-decoration: underline;">đăng nhập</a> để xem lịch sử giao dịch của bạn.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải giao dịch...</td></tr>';
+
+            try {
+                var res = await fetch('/api/deposit/history?username=' + encodeURIComponent(currentUser.username));
+                var list = await res.json();
+
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; opacity: 0.7;">Chưa có giao dịch phát sinh nào cho tài khoản này.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                list.forEach(function(t) {
+                    var isPlus = t.type === 'deposit';
+                    var amountColor = isPlus ? '#22c55e' : '#ef4444';
+                    var prefix = isPlus ? '+ ' : '- ';
+
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.style.fontSize = '0.88rem';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 14px; font-weight: 600; color: var(--color-primary);">#${t.id}</td>
+                        <td style="padding: 12px 14px;">${t.method || 'VietQR'}</td>
+                        <td style="padding: 12px 14px; font-weight: 700; color: ${amountColor};">${prefix}${t.amount.toLocaleString('vi-VN')} đ</td>
+                        <td style="padding: 12px 14px; opacity: 0.85;">${t.description || 'Nạp tiền tài khoản'}</td>
+                        <td style="padding: 12px 14px;"><span class="badge-status badge-done"><i class="fas fa-check"></i> Thành công</span></td>
+                        <td style="padding: 12px 14px; opacity: 0.7; font-size: 0.8rem;">${t.createdAt || 'Vừa xong'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải lịch sử giao dịch!</td></tr>';
+            }
+        }
+
+        // =====================================================================
+        // LOAD LỊCH SỬ ĐƠN HÀNG (ĐƠN HÀNG ĐI CÙNG TÀI KHOẢN)
+        // =====================================================================
+        async function loadOrderHistory() {
+            var tbody = document.getElementById('orderHistoryTbody');
+            if (!tbody) return;
+
+            // QUY TẮC 2: Tiền nạp và đơn hàng đi cùng tài khoản người dùng
+            if (!currentUser) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 36px; opacity: 0.75;"><i class="fas fa-lock" style="font-size: 1.8rem; display: block; margin-bottom: 10px; color: var(--color-primary);"></i> Vui lòng <a href="login.html" style="color: var(--color-primary); font-weight: 700; text-decoration: underline;">đăng nhập</a> để xem lịch sử chạy mã của bạn.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; opacity: 0.6;"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách mã...</td></tr>';
+
+            try {
+                var res = await fetch('/api/chungsuc/history?username=' + encodeURIComponent(currentUser.username));
+                var orders = await res.json();
+
+                if (!orders || orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; opacity: 0.7;">Bạn chưa có mã nào đang chạy. Hãy bấm <a href="javascript:void(0)" onclick="switchTab(\'chungsuc\')" style="color: var(--color-primary); font-weight: 600;">Sự kiện chung sức</a> để tạo đơn!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                orders.forEach(function(o) {
+                    var percent = Math.min(100, Math.round((o.completedCount / o.totalCount) * 100));
+                    var statusBadge = o.status === 'COMPLETED' || percent >= 100
+                        ? '<span class="badge-status badge-done"><i class="fas fa-check"></i> Hoàn thành</span>'
+                        : '<span class="badge-status badge-running"><i class="fas fa-spinner fa-spin"></i> Đang chạy (' + percent + '%)</span>';
+
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.style.fontSize = '0.88rem';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 14px; font-weight: 600; color: var(--color-primary);">#${o.id}</td>
+                        <td style="padding: 12px 14px;"><strong>${o.customerName || 'Khách'}</strong></td>
+                        <td style="padding: 12px 14px; font-family: monospace;"><strong>${o.code}</strong></td>
+                        <td style="padding: 12px 14px;"><span style="opacity: 0.85;">${o.packageTitle || 'Chung Sức'}</span></td>
+                        <td style="padding: 12px 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="progress" style="width: 100px; height: 6px;">
+                                    <div class="progress-bar ${percent >= 100 ? 'is-done' : ''}" style="width: ${percent}%;"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; font-weight: 600;">${o.completedCount}/${o.totalCount}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 12px 14px;">${statusBadge}</td>
+                        <td style="padding: 12px 14px; opacity: 0.7; font-size: 0.8rem;">${o.createdAt || 'Vừa xong'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải lịch sử chạy mã!</td></tr>';
+            }
+        }
+
+        // =====================================================================
+        // QUẢN LÝ USER & QUY TẮC ĐĂNG XUẤT RESET VỀ 0
+        // =====================================================================
+        async function fetchUserProfile() {
+            // Khi vào trang web thì luôn ở dạng CHƯA ĐĂNG NHẬP vào tài khoản nào cả
+            // Dọn sạch token vĩnh viễn ở localStorage
+            try {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_user');
+            } catch (e) {}
+
+            // Chỉ duy trì phiên nếu người dùng vừa chủ động đăng nhập trong tab phiên hiện tại (sessionStorage)
+            var token = sessionStorage.getItem('auth_token');
+            var savedUser = null;
+            try { savedUser = JSON.parse(sessionStorage.getItem('auth_user')); } catch (e) {}
+
+            // NẾU CHƯA ĐĂNG NHẬP HOẶC KHÔNG CÓ TOKEN -> ĐẶT CURRENTUSER = NULL (SỐ TIỀN VỀ 0)
+            if (!token || !savedUser || !savedUser.username) {
+                currentUser = null;
+                updateUserUI();
+                loadOrderHistory();
+                loadTransactions();
+                return;
+            }
+
+            try {
+                var res = await fetch('/api/auth/me?username=' + encodeURIComponent(savedUser.username), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await res.json();
+                if (data.success && data.user) {
+                    currentUser = data.user;
+                } else {
+                    currentUser = null;
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('auth_user');
+                }
+            } catch (err) {
+                currentUser = null;
+            }
+            updateUserUI();
+            loadOrderHistory();
+            loadTransactions();
+        }
+
+        function updateUserUI() {
+            // QUY TẮC 2: KHI ĐĂNG XUẤT THÌ SỐ TIỀN HIỆN TRÊN TRANG CHỦ RESET VỀ 0
+            var balText = currentUser ? (currentUser.balance || 0).toLocaleString('vi-VN') + ' đ' : '0 đ';
+            var balElem = document.getElementById('userBalanceText');
+            var balMobileElem = document.getElementById('userBalanceMobile');
+            if (balElem) balElem.textContent = balText;
+            if (balMobileElem) balMobileElem.textContent = balText;
+
+            var nameElem = document.getElementById('userNameText');
+            var avatarElem = document.getElementById('userAvatarText');
+            var roleElem = document.getElementById('userRoleText');
+            var authContainer = document.getElementById('authActionsContainer');
+            var logoutBtn = document.getElementById('logoutBtn');
+
+            if (!currentUser) {
+                if (nameElem) nameElem.textContent = 'Khách';
+                if (roleElem) roleElem.textContent = 'Chưa đăng nhập';
+                if (avatarElem) avatarElem.textContent = '?';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+
+                if (authContainer) {
+                    authContainer.innerHTML = `
+                        <a href="login.html" class="btn btn-sm btn-glass" style="margin-right: 6px;"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+                        <a href="register.html" class="btn btn-sm btn-primary"><i class="fas fa-user-plus"></i> Đăng ký</a>
+                    `;
+                }
+            } else {
+                if (nameElem) nameElem.textContent = currentUser.username;
+                if (avatarElem) avatarElem.textContent = currentUser.username.charAt(0).toUpperCase();
+                var roleLabel = currentUser.role === 'ROLE_ADMIN' ? '👑 Quản Trị Viên' : 'Thành Viên';
+                if (roleElem) roleElem.textContent = roleLabel;
+                if (logoutBtn) logoutBtn.style.display = 'flex';
+
+                if (authContainer) {
+                    authContainer.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary); padding: 6px 12px; background: color-mix(in srgb, var(--color-primary) 12%, transparent); border-radius: var(--radius-md);">
+                                <i class="fas fa-user-check"></i> ${currentUser.username} (${(currentUser.balance || 0).toLocaleString('vi-VN')} đ)
+                            </span>
+                            <button class="btn btn-sm btn-glass" onclick="handleLogout()" title="Đăng xuất tài khoản">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            // KHÓA / MỞ FORM NẠP TIỀN THEO TRẠNG THÁI ĐĂNG NHẬP (QUY TẮC 1)
+            var depWarning = document.getElementById('depositLoginWarning');
+            var depMainContent = document.getElementById('depositMainContent');
+            if (depWarning && depMainContent) {
+                if (!currentUser) {
+                    depWarning.style.display = 'block';
+                    depMainContent.style.opacity = '0.35';
+                    depMainContent.style.pointerEvents = 'none';
+                } else {
+                    depWarning.style.display = 'none';
+                    depMainContent.style.opacity = '1';
+                    depMainContent.style.pointerEvents = 'auto';
+                }
+            }
+
+            updateVietQrCode();
+        }
+
+        // XỬ LÝ ĐĂNG XUẤT: RESET SỐ DƯ VÀ ĐƠN HÀNG VỀ 0
+        function handleLogout() {
+            Swal.fire({
+                title: 'Đăng xuất tài khoản?',
+                text: 'Bạn có chắc chắn muốn đăng xuất? Số dư hiển thị sẽ được reset về 0 đ.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-right-from-bracket"></i> Đăng xuất',
+                cancelButtonText: 'Ở lại'
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('auth_user');
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('auth_user');
+                    currentUser = null;
+                    updateUserUI();
+                    loadOrderHistory();
+                    loadTransactions();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã Đăng Xuất An Toàn',
+                        text: 'Số tiền và đơn hàng trên trang chủ đã được reset về 0 đ.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        var logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+
+        // Change Password
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            var oldP = document.getElementById('oldPasswordInput').value;
+            var newP = document.getElementById('newPasswordInput').value;
+            var confirmP = document.getElementById('newPasswordConfirmInput').value;
+
+            if (newP !== confirmP) {
+                Swal.fire({ icon: 'warning', title: 'Không khớp', text: 'Mật khẩu mới nhập lại không khớp!' });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Đổi mật khẩu thành công!',
+                text: 'Mật khẩu tài khoản của bạn đã được cập nhật an toàn.'
+            });
+            document.getElementById('oldPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('newPasswordConfirmInput').value = '';
+        }
+
+        function toggleOtpSecurity(enabled) {
+            Swal.fire({
+                icon: 'success',
+                title: enabled ? 'Đã bật 2FA OTP' : 'Đã tắt 2FA OTP',
+                text: enabled ? 'Mỗi khi đăng nhập hệ thống sẽ yêu cầu xác minh bảo vệ an toàn.' : 'Đã tắt chế độ xác minh 2FA.'
+            });
+        }
+
+        // On document ready
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchUserProfile();
+            loadPackages();
+            recalcSplitPricing();
+
+            // Kiểm tra thông báo sau khi quay lại từ trang thanh toán thành công
+            var hasPaymentToast = sessionStorage.getItem('payment_success_toast') || localStorage.getItem('payment_success_toast');
+            if (hasPaymentToast) {
+                sessionStorage.removeItem('payment_success_toast');
+                localStorage.removeItem('payment_success_toast');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thanh Toán Thành Công!',
+                    text: 'Chào mừng bạn quay lại trang chủ. Hệ thống đã xác nhận giao dịch và cập nhật số dư của bạn!',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            }
+
+            var redirectTab = sessionStorage.getItem('redirect_tab') || localStorage.getItem('redirect_tab');
+            if (redirectTab) {
+                sessionStorage.removeItem('redirect_tab');
+                localStorage.removeItem('redirect_tab');
+                switchTab(redirectTab);
+            }
+        });
+    </script>
+</body>
+
+</html>

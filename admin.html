@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Trị Hệ Thống - Chung sức Trí Đức</title>
+    
+    <meta name="description" content="Trang Quản Trị Hệ Thống Chung sức Trí Đức: Thống kê thu nhập, theo dõi đơn hàng, quản lý gói sự kiện và người dùng.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Trang Quản Trị Admin - Chung sức Trí Đức">
+    <meta property="og:image" content="uploads/logo.png">
+
+    <!-- CSS Links -->
+    <link href="css/dynamic-theme.css" rel="stylesheet">
+    <link href="css/glass-theme.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="uploads/favicon.png">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('theme-preference');
+                if (!theme) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--color-background);
+            color: var(--color-foreground);
+            font-family: var(--font-body);
+            min-height: 100vh;
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Dedicated Admin Sidebar */
+        .admin-sidebar {
+            width: 270px;
+            background: var(--glass-bg);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 1000;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: transform 0.3s ease;
+        }
+
+        .admin-brand {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .admin-nav {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            color: var(--color-foreground);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .admin-nav-item:hover {
+            background: var(--color-muted);
+            color: var(--color-primary);
+        }
+
+        .admin-nav-item.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white !important;
+            font-weight: 600;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
+        }
+
+        .admin-nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .admin-main-content {
+            margin-left: 270px;
+            flex: 1;
+            padding: 28px 36px 60px;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--color-primary) 8%, transparent) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, color-mix(in srgb, #f59e0b 8%, transparent) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+            .admin-main-content {
+                margin-left: 0;
+                padding: 70px 16px 40px;
+            }
+        }
+
+        /* Top Bar */
+        .admin-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .pkg-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ef4444, #f59e0b);
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .badge-done {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .badge-running {
+            background: rgba(0, 145, 255, 0.15);
+            color: #0091ff;
+            border: 1px solid rgba(0, 145, 255, 0.3);
+        }
+        .badge-cancelled {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .admin-tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .admin-tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mobile Top Navigation for Admin -->
+    <header class="mobile-top-bar mobile-only">
+        <button class="mobile-menu-btn-inline" id="adminMobileMenuBtn" title="Mở danh mục menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-brand-name">
+            <i class="fas fa-user-shield" style="color: #f59e0b; margin-right: 6px;"></i> Quản Trị Hệ Thống
+        </div>
+        <button class="theme-toggle" id="themeToggleMobile" style="width: 36px; height: 36px; font-size: 1rem; border-radius: 8px;">
+            <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+            <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+        </button>
+    </header>
+
+    <div class="sidebar-overlay" id="adminSidebarOverlay"></div>
+
+    <div class="admin-layout">
+        <!-- SEPARATE DEDICATED ADMIN SIDEBAR -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-brand">
+                <img src="uploads/logo.png" alt="Logo" style="width: 40px; height: 40px; border-radius: var(--radius-md);">
+                <div>
+                    <div style="font-weight: 700; font-size: 1rem; line-height: 1.2;">Chung sức Trí Đức</div>
+                    <span class="admin-badge"><i class="fas fa-shield-alt"></i> QUẢN TRỊ VIÊN</span>
+                </div>
+            </div>
+
+            <!-- Admin Menu Navigation -->
+            <nav class="admin-nav">
+                <a class="admin-nav-item active" data-tab="stats">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Thống Kê Doanh Thu</span>
+                </a>
+                <a class="admin-nav-item" data-tab="packages">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Quản Lý Gói Sự Kiện</span>
+                </a>
+                <a class="admin-nav-item" data-tab="orders">
+                    <i class="fas fa-truck-fast"></i>
+                    <span>Theo Dõi Đơn Hàng</span>
+                </a>
+                <a class="admin-nav-item" data-tab="users">
+                    <i class="fas fa-users-gear"></i>
+                    <span>Quản Lý Thành Viên</span>
+                </a>
+
+                <div style="height: 1px; background: var(--glass-border); margin: 12px 6px;"></div>
+
+                <a href="index.html" class="admin-nav-item" style="color: var(--color-primary);">
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                    <span>Xem Màn Hình User</span>
+                </a>
+            </nav>
+
+            <!-- Admin Sidebar Footer -->
+            <div style="padding: 16px; border-top: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        A
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.88rem;" id="adminCurrentUsername">admin</div>
+                        <div style="font-size: 0.72rem; color: #f59e0b;">Quản Trị Tối Cao</div>
+                    </div>
+                </div>
+                <button class="logout-btn" id="adminLogoutBtn" title="Đăng xuất">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN ADMIN WORKSPACE -->
+        <main class="admin-main-content">
+            <!-- Top Bar Actions -->
+            <div class="admin-top-bar">
+                <div>
+                    <h1 style="font-size: 1.55rem; font-weight: 700; margin: 0 0 4px;" id="adminTabTitle">
+                        📈 Thống Kê Thu Nhập & Doanh Thu
+                    </h1>
+                    <p style="margin: 0; opacity: 0.7; font-size: 0.85rem;">
+                        Trung tâm điều hành và quản trị Hệ Thống Sự Kiện Chung Sức Tự Động
+                    </p>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <a href="index.html" class="btn btn-sm btn-glass" title="Mở trang bán hàng dành cho khách">
+                        <i class="fas fa-store"></i> Xem Cửa Hàng User
+                    </a>
+                    <button class="theme-toggle desktop-only" id="themeToggleDesktop" title="Chuyển chế độ sáng/tối">
+                        <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+                        <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- PHÂN HỆ 1: THỐNG KÊ DOANH THU & THU NHẬP THEO THỜI GIAN TỰ CHỌN -->
+            <!-- ============================================================= -->
+            <div class="admin-tab-pane active" id="pane-stats">
+                <!-- Date Range Filter Box -->
+                <div class="glass-card" style="margin-bottom: 24px; padding: 18px 24px;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <strong style="font-size: 0.95rem;">
+                                <i class="fas fa-calendar-days" style="color: var(--color-primary); margin-right: 6px;"></i> Chọn Khoảng Thời Gian:
+                            </strong>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-size: 0.85rem; opacity: 0.8;">Từ:</label>
+                                <input type="date" id="filterFromDate" class="form-control" style="padding: 7px 12px; font-size: 0.85rem;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-size: 0.85rem; opacity: 0.8;">Đến:</label>
+                                <input type="date" id="filterToDate" class="form-control" style="padding: 7px 12px; font-size: 0.85rem;">
+                            </div>
+                            <button class="btn btn-primary" onclick="loadStatistics()" style="padding: 8px 18px; font-size: 0.85rem;">
+                                <i class="fas fa-filter"></i> Lọc Dữ Liệu
+                            </button>
+                        </div>
+
+                        <!-- Quick Filters -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-glass" onclick="setQuickDate('today')">Hôm nay</button>
+                            <button class="btn btn-sm btn-glass" onclick="setQuickDate('7days')">7 Ngày qua</button>
+                            <button class="btn btn-sm btn-glass" onclick="setQuickDate('month')">Tháng này</button>
+                            <button class="btn btn-sm btn-glass" onclick="setQuickDate('all')">Toàn thời gian</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Statistics Cards -->
+                <div class="desktop-stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-card-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">Thu Nhập Chạy Mã (Doanh Thu)</div>
+                            <div class="stat-card-value" id="statTotalIncome" style="color: #22c55e;">0 đ</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-card-icon"><i class="fas fa-money-bill-transfer"></i></div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">Tổng Tiền Nạp (VietQR + Thẻ)</div>
+                            <div class="stat-card-value" id="statTotalDeposit">0 đ</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-info">
+                        <div class="stat-card-icon"><i class="fas fa-boxes-packing"></i></div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">Số Đơn Hàng Trong Kỳ</div>
+                            <div class="stat-card-value" id="statTotalOrders">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-card-content">
+                            <div class="stat-card-label">Tổng Thành Viên Hệ Thống</div>
+                            <div class="stat-card-value" id="statTotalUsers">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Log Table in Date Range -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">
+                            <i class="fas fa-receipt" style="color: var(--color-primary); margin-right: 8px;"></i>
+                            Lịch Sử Giao Dịch & Biến Động Số Dư
+                        </h3>
+                    </div>
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 10px 14px;">MÃ GD</th>
+                                    <th style="padding: 10px 14px;">TÀI KHOẢN</th>
+                                    <th style="padding: 10px 14px;">LOẠI</th>
+                                    <th style="padding: 10px 14px;">SỐ TIỀN</th>
+                                    <th style="padding: 10px 14px;">HÌNH THỨC</th>
+                                    <th style="padding: 10px 14px;">NỘI DUNG</th>
+                                    <th style="padding: 10px 14px;">THỜI GIAN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statTransactionsTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- PHÂN HỆ 2: QUẢN LÝ GÓI SỰ KIỆN (THÊM / SỬA / XÓA + ẢNH TỪ MÁY) -->
+            <!-- ============================================================= -->
+            <div class="admin-tab-pane" id="pane-packages">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px;">
+                                <i class="fas fa-boxes-stacked" style="color: var(--color-accent); margin-right: 8px;"></i>
+                                Danh Sách Gói Sự Kiện (Hiển Thị Ở Nửa Phải Màn Hình User)
+                            </h3>
+                            <span style="font-size: 0.85rem; opacity: 0.7;">Thêm gói mới, sửa giá vé, cập nhật ảnh tải từ thiết bị hoặc xóa gói</span>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="openPackageModal()">
+                            <i class="fas fa-plus-circle"></i> Thêm Gói Sự Kiện Mới
+                        </button>
+                    </div>
+
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 10px 14px;">ẢNH THAM KHẢO</th>
+                                    <th style="padding: 10px 14px;">TÊN GÓI SỰ KIỆN</th>
+                                    <th style="padding: 10px 14px;">SỐ VÉ</th>
+                                    <th style="padding: 10px 14px;">GIÁ BÁN</th>
+                                    <th style="padding: 10px 14px;">GIÁ GỐC</th>
+                                    <th style="padding: 10px 14px;">HUY HIỆU</th>
+                                    <th style="padding: 10px 14px; text-align: right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminPackagesTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- PHÂN HỆ 3: THEO DÕI CÁC ĐƠN HÀNG TOÀN HỆ THỐNG -->
+            <!-- ============================================================= -->
+            <div class="admin-tab-pane" id="pane-orders">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px;">
+                                <i class="fas fa-truck-fast" style="color: var(--color-primary); margin-right: 8px;"></i>
+                                Theo Dõi Toàn Bộ Đơn Hàng Khách Hàng
+                            </h3>
+                            <span style="font-size: 0.85rem; opacity: 0.7;">Xem danh sách chi tiết đơn hàng, tiến độ chạy mã, duyệt hoàn thành</span>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <select id="adminOrderFilterStatus" class="form-control" style="padding: 6px 12px; font-size: 0.85rem;" onchange="loadAdminOrders()">
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="RUNNING">Đang chạy</option>
+                                <option value="COMPLETED">Đã hoàn thành</option>
+                                <option value="CANCELLED">Đã hủy</option>
+                            </select>
+                            <button class="btn btn-sm btn-glass" onclick="loadAdminOrders()">
+                                <i class="fas fa-arrows-rotate"></i> Làm mới
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 10px 14px;">MÃ ĐƠN</th>
+                                    <th style="padding: 10px 14px;">TÊN KHÁCH HÀNG</th>
+                                    <th style="padding: 10px 14px;">MÃ CODE SỰ KIỆN</th>
+                                    <th style="padding: 10px 14px;">GÓI ÁP DỤNG</th>
+                                    <th style="padding: 10px 14px;">TIẾN ĐỘ VÉ</th>
+                                    <th style="padding: 10px 14px;">TỔNG TIỀN</th>
+                                    <th style="padding: 10px 14px;">TRẠNG THÁI</th>
+                                    <th style="padding: 10px 14px;">THỜI GIAN</th>
+                                    <th style="padding: 10px 14px; text-align: right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminOrdersTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- PHÂN HỆ 4: QUẢN LÝ THÀNH VIÊN & SỐ DƯ -->
+            <!-- ============================================================= -->
+            <div class="admin-tab-pane" id="pane-users">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 4px;">
+                                <i class="fas fa-users-gear" style="color: #f59e0b; margin-right: 8px;"></i>
+                                Danh Sách Người Dùng & Quản Lý Số Dư
+                            </h3>
+                            <span style="font-size: 0.85rem; opacity: 0.7;">Cộng / trừ số dư và phân quyền tài khoản thành viên</span>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="quickAdjustBalance('demo')">
+                            <i class="fas fa-hand-holding-dollar"></i> Nạp/Trừ Tiền Thành Viên
+                        </button>
+                    </div>
+
+                    <div class="table-responsive-wrap">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--glass-border); font-size: 0.85rem; opacity: 0.8;">
+                                    <th style="padding: 12px 14px;">TÊN ĐĂNG NHẬP</th>
+                                    <th style="padding: 12px 14px;">SỐ ĐIỆN THOẠI</th>
+                                    <th style="padding: 12px 14px;">SỐ DƯ HIỆN TẠI</th>
+                                    <th style="padding: 12px 14px;">VAI TRÒ</th>
+                                    <th style="padding: 12px 14px;">NGÀY ĐĂNG KÝ</th>
+                                    <th style="padding: 12px 14px; text-align: right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: THÊM / SỬA GÓI SỰ KIỆN (HỖ TRỢ TẢI ẢNH TỪ THIẾT BỊ) -->
+    <div class="app-popup" id="packageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="app-popup-box glass-card" style="max-width: 620px; width: 100%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
+                <h2 id="packageModalTitle" style="font-size: 1.25rem; margin: 0;"><i class="fas fa-box-open" style="color: var(--color-primary); margin-right: 8px;"></i> Thêm Gói Sự Kiện Mới</h2>
+                <button type="button" onclick="closePackageModal()" style="background: none; border: none; font-size: 1.2rem; color: var(--color-foreground); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="packageForm" onsubmit="handleSavePackage(event)">
+                <input type="hidden" id="pkgEditId">
+                <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Tên gói sự kiện:</label>
+                    <input type="text" id="pkgTitleInput" class="form-control" placeholder="Ví dụ: Gói Tiết Kiệm - 20 Vé Chung Sức" required style="width: 100%; padding: 10px;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Số vé / lượt chạy:</label>
+                        <input type="number" id="pkgTicketCountInput" class="form-control" min="1" value="20" required style="width: 100%; padding: 10px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Huy hiệu (Badge):</label>
+                        <input type="text" id="pkgBadgeInput" class="form-control" placeholder="HOT, VIP, -10%..." style="width: 100%; padding: 10px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Giá thanh toán (VNĐ):</label>
+                        <input type="number" id="pkgPriceInput" class="form-control" min="1000" step="500" value="10000" required style="width: 100%; padding: 10px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Giá gốc (VNĐ):</label>
+                        <input type="number" id="pkgOriginalPriceInput" class="form-control" min="1000" step="500" value="12000" style="width: 100%; padding: 10px;">
+                    </div>
+                </div>
+
+                <!-- TẢI ẢNH THAM KHẢO TỪ THIẾT BỊ -->
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">
+                        <i class="fas fa-image" style="color: var(--color-accent); margin-right: 6px;"></i> Ảnh tham khảo (Tải lên từ thiết bị):
+                    </label>
+                    <input type="file" id="pkgFileInput" class="form-control" accept="image/*" style="width: 100%; padding: 8px;" onchange="previewUploadedImage(event)">
+                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
+                        <img id="pkgImagePreview" src="uploads/logo.png" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <span style="font-size: 0.8rem; opacity: 0.7;">Chọn ảnh từ máy tính hoặc điện thoại của bạn để làm ảnh đại diện cho gói sự kiện.</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.88rem;">Mô tả quyền lợi gói:</label>
+                    <textarea id="pkgDescInput" class="form-control" rows="3" placeholder="Mô tả ngắn gọn quyền lợi khi mua gói..." style="width: 100%; padding: 10px;"></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-glass" onclick="closePackageModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="btnSavePackageSubmit"><i class="fas fa-check"></i> Lưu Gói Sự Kiện</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin JavaScript Logic -->
+    <script>
+        var currentPackages = [];
+        var uploadedPackageImageBase64 = 'uploads/logo.png';
+
+        // Check Admin Auth
+        function verifyAdminSession() {
+            var authUser = null;
+            try { 
+                authUser = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user')); 
+            } catch (e) {}
+            if (authUser && authUser.role === 'ROLE_ADMIN') {
+                document.getElementById('adminCurrentUsername').textContent = authUser.username;
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Theme Toggle
+        function setupTheme() {
+            var toggles = [document.getElementById('themeToggleDesktop'), document.getElementById('themeToggleMobile')];
+            toggles.forEach(function(btn) {
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                        var next = current === 'dark' ? 'light' : 'dark';
+                        document.documentElement.setAttribute('data-theme', next);
+                        localStorage.setItem('theme-preference', next);
+                    });
+                }
+            });
+        }
+        setupTheme();
+
+        // Mobile drawer handlers
+        var mobileBtn = document.getElementById('adminMobileMenuBtn');
+        var sidebar = document.getElementById('adminSidebar');
+        var overlay = document.getElementById('adminSidebarOverlay');
+        if (mobileBtn && sidebar && overlay) {
+            mobileBtn.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            });
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+
+        // Sidebar Navigation
+        var titles = {
+            'stats': '📈 Thống Kê Thu Nhập & Doanh Thu',
+            'packages': '🎁 Quản Lý Gói Sự Kiện',
+            'orders': '📦 Theo Dõi Toàn Bộ Đơn Hàng',
+            'users': '👥 Quản Lý Thành Viên & Số Dư'
+        };
+
+        document.querySelectorAll('.admin-nav-item[data-tab]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var tab = this.getAttribute('data-tab');
+                document.querySelectorAll('.admin-nav-item').forEach(function(i) { i.classList.remove('active'); });
+                this.classList.add('active');
+
+                document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+                var targetPane = document.getElementById('pane-' + tab);
+                if (targetPane) targetPane.classList.add('active');
+
+                document.getElementById('adminTabTitle').textContent = titles[tab] || 'Quản Trị';
+
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+
+                if (tab === 'stats') loadStatistics();
+                if (tab === 'packages') loadAdminPackages();
+                if (tab === 'orders') loadAdminOrders();
+                if (tab === 'users') loadAdminUsers();
+            });
+        });
+
+        // =====================================================================
+        // 1. THỐNG KÊ DOANH THU & THU NHẬP THEO THỜI GIAN TỰ CHỌN
+        // =====================================================================
+        function setQuickDate(type) {
+            var now = new Date();
+            var from = '';
+            var to = now.toISOString().split('T')[0];
+
+            if (type === 'today') {
+                from = to;
+            } else if (type === '7days') {
+                var d = new Date();
+                d.setDate(d.getDate() - 7);
+                from = d.toISOString().split('T')[0];
+            } else if (type === 'month') {
+                var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                from = firstDay.toISOString().split('T')[0];
+            } else if (type === 'all') {
+                from = '';
+                to = '';
+            }
+
+            document.getElementById('filterFromDate').value = from;
+            document.getElementById('filterToDate').value = to;
+            loadStatistics();
+        }
+
+        async function loadStatistics() {
+            var from = document.getElementById('filterFromDate').value;
+            var to = document.getElementById('filterToDate').value;
+            var url = `/api/admin/statistics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+            var tbody = document.getElementById('statTransactionsTbody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu thống kê...</td></tr>';
+
+            try {
+                var res = await fetch(url);
+                var data = await res.json();
+
+                if (data.success && data.stats) {
+                    document.getElementById('statTotalIncome').textContent = data.stats.totalIncome.toLocaleString('vi-VN') + ' đ';
+                    document.getElementById('statTotalDeposit').textContent = data.stats.totalDeposit.toLocaleString('vi-VN') + ' đ';
+                    document.getElementById('statTotalOrders').textContent = `${data.stats.totalOrders} đơn (${data.stats.completedOrders} xong)`;
+                    document.getElementById('statTotalUsers').textContent = data.stats.totalUsers;
+
+                    tbody.innerHTML = '';
+                    if (!data.transactions || data.transactions.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; opacity: 0.7;">Không có giao dịch nào trong khoảng thời gian này.</td></tr>';
+                        return;
+                    }
+
+                    data.transactions.forEach(function(tx) {
+                        var isPlus = tx.type === 'deposit';
+                        var color = isPlus ? '#22c55e' : '#ef4444';
+                        var sign = isPlus ? '+ ' : '- ';
+                        var tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid var(--glass-border)';
+                        tr.innerHTML = `
+                            <td style="padding: 10px 14px; font-weight: 600; color: var(--color-primary);">#${tx.id}</td>
+                            <td style="padding: 10px 14px; font-weight: 600;">${tx.username}</td>
+                            <td style="padding: 10px 14px;"><span class="badge ${isPlus ? 'badge-done' : 'badge-pending'}">${tx.type}</span></td>
+                            <td style="padding: 10px 14px; font-weight: 700; color: ${color};">${sign}${tx.amount.toLocaleString('vi-VN')} đ</td>
+                            <td style="padding: 10px 14px;">${tx.method || 'VietQR'}</td>
+                            <td style="padding: 10px 14px; opacity: 0.85;">${tx.description || ''}</td>
+                            <td style="padding: 10px 14px; opacity: 0.7; font-size: 0.8rem;">${tx.createdAt || ''}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi kết nối máy chủ!</td></tr>';
+            }
+        }
+
+        // =====================================================================
+        // 2. QUẢN LÝ GÓI SỰ KIỆN (THÊM / SỬA / XÓA)
+        // =====================================================================
+        async function loadAdminPackages() {
+            var tbody = document.getElementById('adminPackagesTbody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách gói...</td></tr>';
+
+            try {
+                var res = await fetch('/api/packages');
+                var packages = await res.json();
+                currentPackages = packages || [];
+
+                tbody.innerHTML = '';
+                if (!packages || packages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; opacity: 0.7;">Chưa có gói sự kiện nào. Hãy bấm nút Thêm Gói Mới!</td></tr>';
+                    return;
+                }
+
+                packages.forEach(function(pkg) {
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 14px;">
+                            <img src="${pkg.imageUrl || 'uploads/logo.png'}" alt="" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--glass-border);" onerror="this.src='uploads/logo.png'">
+                        </td>
+                        <td style="padding: 10px 14px;">
+                            <strong>${pkg.title}</strong>
+                            <div style="font-size: 0.75rem; opacity: 0.7;">Mã: ${pkg.id}</div>
+                        </td>
+                        <td style="padding: 10px 14px; font-weight: 600; color: var(--color-accent);">${pkg.ticketCount} Vé</td>
+                        <td style="padding: 10px 14px; font-weight: 700; color: var(--color-primary);">${pkg.price.toLocaleString('vi-VN')} đ</td>
+                        <td style="padding: 10px 14px; opacity: 0.6; text-decoration: line-through;">${pkg.originalPrice ? pkg.originalPrice.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                        <td style="padding: 10px 14px;"><span class="pkg-badge">${pkg.badge || 'HOT'}</span></td>
+                        <td style="padding: 10px 14px; text-align: right;">
+                            <button class="btn btn-sm btn-glass" onclick="editPackage('${pkg.id}')" title="Sửa gói"><i class="fas fa-edit"></i> Sửa</button>
+                            <button class="btn btn-sm btn-glass" style="color: var(--color-danger); margin-left: 6px;" onclick="deletePackage('${pkg.id}')" title="Xóa gói"><i class="fas fa-trash"></i> Xóa</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải gói sự kiện!</td></tr>';
+            }
+        }
+
+        function openPackageModal() {
+            document.getElementById('packageModalTitle').innerHTML = '<i class="fas fa-plus-circle" style="color: var(--color-primary); margin-right: 8px;"></i> Thêm Gói Sự Kiện Mới';
+            document.getElementById('pkgEditId').value = '';
+            document.getElementById('pkgTitleInput').value = '';
+            document.getElementById('pkgTicketCountInput').value = 20;
+            document.getElementById('pkgPriceInput').value = 10000;
+            document.getElementById('pkgOriginalPriceInput').value = 12000;
+            document.getElementById('pkgBadgeInput').value = 'HOT';
+            document.getElementById('pkgDescInput').value = '';
+            document.getElementById('pkgFileInput').value = '';
+            uploadedPackageImageBase64 = 'uploads/logo.png';
+            document.getElementById('pkgImagePreview').src = 'uploads/logo.png';
+            document.getElementById('packageModal').style.display = 'flex';
+        }
+
+        function closePackageModal() {
+            document.getElementById('packageModal').style.display = 'none';
+        }
+
+        function previewUploadedImage(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedPackageImageBase64 = e.target.result;
+                    document.getElementById('pkgImagePreview').src = uploadedPackageImageBase64;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function editPackage(pkgId) {
+            var pkg = currentPackages.find(function(p) { return p.id === pkgId; });
+            if (!pkg) return;
+
+            document.getElementById('packageModalTitle').innerHTML = '<i class="fas fa-pen" style="color: var(--color-primary); margin-right: 8px;"></i> Chỉnh Sửa Gói Sự Kiện';
+            document.getElementById('pkgEditId').value = pkg.id;
+            document.getElementById('pkgTitleInput').value = pkg.title;
+            document.getElementById('pkgTicketCountInput').value = pkg.ticketCount;
+            document.getElementById('pkgPriceInput').value = pkg.price;
+            document.getElementById('pkgOriginalPriceInput').value = pkg.originalPrice || '';
+            document.getElementById('pkgBadgeInput').value = pkg.badge || '';
+            document.getElementById('pkgDescInput').value = pkg.description || '';
+            uploadedPackageImageBase64 = pkg.imageUrl || 'uploads/logo.png';
+            document.getElementById('pkgImagePreview').src = uploadedPackageImageBase64;
+            document.getElementById('packageModal').style.display = 'flex';
+        }
+
+        async function handleSavePackage(e) {
+            e.preventDefault();
+            var editId = document.getElementById('pkgEditId').value;
+            var title = document.getElementById('pkgTitleInput').value.trim();
+            var ticketCount = parseInt(document.getElementById('pkgTicketCountInput').value) || 10;
+            var price = parseInt(document.getElementById('pkgPriceInput').value) || 5000;
+            var originalPrice = parseInt(document.getElementById('pkgOriginalPriceInput').value) || 0;
+            var badge = document.getElementById('pkgBadgeInput').value.trim();
+            var desc = document.getElementById('pkgDescInput').value.trim();
+
+            var endpoint = editId ? '/api/packages/update' : '/api/packages/create';
+            var payload = {
+                id: editId,
+                title: title,
+                ticketCount: ticketCount,
+                price: price,
+                originalPrice: originalPrice,
+                badge: badge,
+                description: desc,
+                imageUrl: uploadedPackageImageBase64
+            };
+
+            try {
+                var res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await res.json();
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: data.message });
+                    closePackageModal();
+                    loadAdminPackages();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể lưu gói sự kiện.' });
+            }
+        }
+
+        async function deletePackage(pkgId) {
+            var confirmRes = await Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: 'Bạn có chắc chắn muốn xóa gói sự kiện này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (confirmRes.isConfirmed) {
+                try {
+                    var res = await fetch('/api/packages/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: pkgId })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Đã xóa!', text: data.message });
+                        loadAdminPackages();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể xóa gói.' });
+                }
+            }
+        }
+
+        // =====================================================================
+        // 3. THEO DÕI TOÀN BỘ ĐƠN HÀNG
+        // =====================================================================
+        async function loadAdminOrders() {
+            var status = document.getElementById('adminOrderFilterStatus').value;
+            var tbody = document.getElementById('adminOrdersTbody');
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải đơn hàng...</td></tr>';
+
+            try {
+                var res = await fetch('/api/admin/orders?status=' + encodeURIComponent(status));
+                var orders = await res.json();
+                tbody.innerHTML = '';
+                if (!orders || orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px; opacity: 0.7;">Không có đơn hàng nào phù hợp bộ lọc.</td></tr>';
+                    return;
+                }
+
+                orders.forEach(function(o) {
+                    var statusBadge = '';
+                    if (o.status === 'COMPLETED') statusBadge = '<span class="badge-status badge-done"><i class="fas fa-check"></i> Hoàn thành</span>';
+                    else if (o.status === 'RUNNING') statusBadge = `<span class="badge-status badge-running"><i class="fas fa-spinner fa-spin"></i> Đang chạy (${o.completedCount}/${o.totalCount})</span>`;
+                    else if (o.status === 'CANCELLED') statusBadge = '<span class="badge-status badge-cancelled"><i class="fas fa-xmark"></i> Đã hủy</span>';
+                    else statusBadge = '<span class="badge-status badge-pending">Chờ xử lý</span>';
+
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 14px; font-weight: 600; color: var(--color-primary);">#${o.id}</td>
+                        <td style="padding: 10px 14px;"><strong>${o.customerName || 'N/A'}</strong><div style="font-size: 0.75rem; opacity: 0.7;">(${o.username})</div></td>
+                        <td style="padding: 10px 14px; font-family: monospace;">${o.code}</td>
+                        <td style="padding: 10px 14px; font-size: 0.85rem;"><span style="opacity: 0.85;">${o.packageTitle || 'Chung Sức'}</span></td>
+                        <td style="padding: 10px 14px; font-weight: 600;">${o.completedCount || 0}/${o.totalCount} Vé</td>
+                        <td style="padding: 10px 14px; font-weight: 700; color: var(--color-primary);">${o.price.toLocaleString('vi-VN')} đ</td>
+                        <td style="padding: 10px 14px;">${statusBadge}</td>
+                        <td style="padding: 10px 14px; opacity: 0.7; font-size: 0.8rem;">${o.createdAt || ''}</td>
+                        <td style="padding: 10px 14px; text-align: right;">
+                            <button class="btn btn-sm btn-glass" onclick="changeAdminOrderStatus('${o.id}')" title="Cập nhật trạng thái">
+                                <i class="fas fa-sliders"></i> Xử lý
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải đơn hàng!</td></tr>';
+            }
+        }
+
+        async function changeAdminOrderStatus(orderId) {
+            var { value: newStatus } = await Swal.fire({
+                title: 'Cập nhật đơn hàng #' + orderId,
+                input: 'select',
+                inputOptions: {
+                    'COMPLETED': 'Hoàn thành (Đủ 100% vé)',
+                    'RUNNING': 'Đang chạy (BOT tiếp tục đẩy)',
+                    'CANCELLED': 'Hủy đơn hàng'
+                },
+                inputPlaceholder: 'Chọn trạng thái mới',
+                showCancelButton: true
+            });
+
+            if (newStatus) {
+                try {
+                    var res = await fetch('/api/admin/orders/update-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: orderId, status: newStatus })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Thành công', text: data.message });
+                        loadAdminOrders();
+                    }
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể cập nhật trạng thái đơn.' });
+                }
+            }
+        }
+
+        // =====================================================================
+        // 4. QUẢN LÝ THÀNH VIÊN & SỐ DƯ
+        // =====================================================================
+        async function loadAdminUsers() {
+            var tbody = document.getElementById('adminUsersTbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu thành viên...</td></tr>';
+
+            try {
+                var res = await fetch('/api/admin/users');
+                var users = await res.json();
+                tbody.innerHTML = '';
+                users.forEach(function(u) {
+                    var tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 14px; font-weight: 600;">${u.username}</td>
+                        <td style="padding: 12px 14px; opacity: 0.8;">${u.phone || 'N/A'}</td>
+                        <td style="padding: 12px 14px; font-weight: 700; color: var(--color-primary);">${(u.balance || 0).toLocaleString('vi-VN')} đ</td>
+                        <td style="padding: 12px 14px;"><span class="badge ${u.role === 'ROLE_ADMIN' ? 'badge-running' : 'badge-done'}">${u.role}</span></td>
+                        <td style="padding: 12px 14px; opacity: 0.7; font-size: 0.8rem;">${u.createdAt || '22/10/2026'}</td>
+                        <td style="padding: 12px 14px; text-align: right;">
+                            <button class="btn btn-sm btn-primary" onclick="quickAdjustBalance('${u.username}')">
+                                <i class="fas fa-plus-minus"></i> Nạp/Trừ
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-danger); padding: 20px;">Lỗi tải danh sách người dùng!</td></tr>';
+            }
+        }
+
+        function quickAdjustBalance(username) {
+            Swal.fire({
+                title: 'Cộng/Trừ Số Dư: ' + username,
+                input: 'number',
+                inputLabel: 'Nhập số tiền VNĐ (nhập số âm để trừ)',
+                inputValue: 50000,
+                showCancelButton: true,
+                confirmButtonText: 'Xác nhận thay đổi'
+            }).then(async function(result) {
+                if (result.isConfirmed) {
+                    var amt = parseInt(result.value);
+                    if (isNaN(amt)) return;
+                    var res = await fetch('/api/admin/adjust-balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, amount: amt })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Thành công', text: data.message });
+                        loadAdminUsers();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                    }
+                }
+            });
+        }
+
+        // Logout
+        document.getElementById('adminLogoutBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Đăng xuất?',
+                text: 'Bạn có chắc chắn muốn đăng xuất quyền Admin?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Đăng xuất'
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('auth_user');
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            verifyAdminSession();
+            loadStatistics();
+        });
+    </script>
+</body>
+
+</html>
