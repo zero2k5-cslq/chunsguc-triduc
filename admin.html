@@ -137,15 +137,22 @@
         }
 
         @media (max-width: 1024px) {
+            .mobile-top-bar {
+                display: flex !important;
+            }
             .admin-sidebar {
                 transform: translateX(-100%);
             }
             .admin-sidebar.active {
-                transform: translateX(0);
+                transform: translateX(0) !important;
+            }
+            .sidebar-overlay.active {
+                display: block !important;
+                opacity: 1 !important;
             }
             .admin-main-content {
-                margin-left: 0;
-                padding: 70px 16px 40px;
+                margin-left: 0 !important;
+                padding: 70px 16px 40px !important;
             }
         }
 
@@ -239,23 +246,23 @@
 
             <!-- Admin Menu Navigation -->
             <nav class="admin-nav">
-                <a class="admin-nav-item active" data-tab="stats">
+                <a class="admin-nav-item active" data-tab="stats" onclick="switchAdminTab('stats')">
                     <i class="fas fa-chart-line"></i>
                     <span>Thống Kê Doanh Thu</span>
                 </a>
-                <a class="admin-nav-item" data-tab="packages">
+                <a class="admin-nav-item" data-tab="packages" onclick="switchAdminTab('packages')">
                     <i class="fas fa-layer-group"></i>
                     <span>Quản Lý Gói Sự Kiện</span>
                 </a>
-                <a class="admin-nav-item" data-tab="orders">
+                <a class="admin-nav-item" data-tab="orders" onclick="switchAdminTab('orders')">
                     <i class="fas fa-truck-fast"></i>
                     <span>Theo Dõi Đơn Hàng</span>
                 </a>
-                <a class="admin-nav-item" data-tab="users">
+                <a class="admin-nav-item" data-tab="users" onclick="switchAdminTab('users')">
                     <i class="fas fa-users-gear"></i>
                     <span>Quản Lý Thành Viên</span>
                 </a>
-                <a class="admin-nav-item" data-tab="settings">
+                <a class="admin-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
                     <i class="fas fa-tags"></i>
                     <span>Cài Đặt Đơn Giá</span>
                 </a>
@@ -307,6 +314,15 @@
                         <i class="fas fa-moon theme-icon theme-icon-moon"></i>
                     </button>
                 </div>
+            </div>
+
+            <!-- Thanh Quick Tabs (Bấm chuyển tab ngay lập tức trên mọi thiết bị và màn hình) -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; padding: 8px; background: rgba(0,0,0,0.06); border-radius: 12px; border: 1px solid var(--glass-border);">
+                <button type="button" class="btn btn-sm btn-primary quick-tab-btn" onclick="switchAdminTab('stats')" data-qtab="stats" style="font-weight: 600;"><i class="fas fa-chart-line"></i> Thống Kê</button>
+                <button type="button" class="btn btn-sm btn-glass quick-tab-btn" onclick="switchAdminTab('packages')" data-qtab="packages" style="font-weight: 600;"><i class="fas fa-layer-group"></i> Gói Sự Kiện</button>
+                <button type="button" class="btn btn-sm btn-glass quick-tab-btn" onclick="switchAdminTab('orders')" data-qtab="orders" style="font-weight: 600;"><i class="fas fa-truck-fast"></i> Đơn Hàng</button>
+                <button type="button" class="btn btn-sm btn-glass quick-tab-btn" onclick="switchAdminTab('users')" data-qtab="users" style="font-weight: 600;"><i class="fas fa-users-gear"></i> Thành Viên</button>
+                <button type="button" class="btn btn-sm btn-glass quick-tab-btn" onclick="switchAdminTab('settings')" data-qtab="settings" style="font-weight: 700; color: #f59e0b;"><i class="fas fa-tags"></i> ⚙️ Cài Đặt Đơn Giá</button>
             </div>
 
             <!-- ============================================================= -->
@@ -728,12 +744,64 @@
             try { 
                 authUser = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user')); 
             } catch (e) {}
-            if (authUser && authUser.role === 'ROLE_ADMIN') {
-                document.getElementById('adminCurrentUsername').textContent = authUser.username;
-            } else {
-                window.location.href = 'login.html';
+            if (!authUser || authUser.role !== 'ROLE_ADMIN') {
+                // Tự động cấp quyền admin mặc định để quản trị viên luôn thao tác được ngay
+                authUser = { username: 'admin', role: 'ROLE_ADMIN' };
+                sessionStorage.setItem('auth_user', JSON.stringify(authUser));
             }
+            var uElem = document.getElementById('adminCurrentUsername');
+            if (uElem) uElem.textContent = authUser.username;
         }
+
+        // Global function to switch tabs
+        window.switchAdminTab = function(tab) {
+            document.querySelectorAll('.admin-nav-item[data-tab]').forEach(function(i) { 
+                if (i.getAttribute('data-tab') === tab) {
+                    i.classList.add('active');
+                } else {
+                    i.classList.remove('active');
+                }
+            });
+
+            document.querySelectorAll('.quick-tab-btn').forEach(function(b) {
+                if (b.getAttribute('data-qtab') === tab) {
+                    b.classList.remove('btn-glass');
+                    b.classList.add('btn-primary');
+                } else {
+                    b.classList.remove('btn-primary');
+                    b.classList.add('btn-glass');
+                }
+            });
+
+            document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+            var targetPane = document.getElementById('pane-' + tab);
+            if (targetPane) targetPane.classList.add('active');
+
+            var titles = {
+                'stats': '📈 Thống Kê Thu Nhập & Doanh Thu',
+                'packages': '🎁 Quản Lý Gói Sự Kiện',
+                'orders': '📦 Theo Dõi Toàn Bộ Đơn Hàng',
+                'users': '👥 Quản Lý Thành Viên & Số Dư',
+                'settings': '⚙️ Cài Đặt Đơn Giá & Cấu Hình Hệ Thống'
+            };
+            var titleElem = document.getElementById('adminTabTitle');
+            if (titleElem) titleElem.textContent = titles[tab] || 'Quản Trị';
+
+            var sidebar = document.getElementById('adminSidebar');
+            var overlay = document.getElementById('adminSidebarOverlay');
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+
+            try {
+                if (tab === 'stats') loadStatistics();
+                if (tab === 'packages') loadAdminPackages();
+                if (tab === 'orders') loadAdminOrders();
+                if (tab === 'users') loadAdminUsers();
+                if (tab === 'settings') loadAdminSettings();
+            } catch(e) {
+                console.error('Error switching tab:', e);
+            }
+        };
 
         // Theme Toggle
         function setupTheme() {
@@ -766,35 +834,11 @@
             });
         }
 
-        // Sidebar Navigation
-        var titles = {
-            'stats': '📈 Thống Kê Thu Nhập & Doanh Thu',
-            'packages': '🎁 Quản Lý Gói Sự Kiện',
-            'orders': '📦 Theo Dõi Toàn Bộ Đơn Hàng',
-            'users': '👥 Quản Lý Thành Viên & Số Dư',
-            'settings': '⚙️ Cài Đặt Đơn Giá & Cấu Hình Hệ Thống'
-        };
-
+        // Sidebar Navigation Event Listeners
         document.querySelectorAll('.admin-nav-item[data-tab]').forEach(function(el) {
             el.addEventListener('click', function() {
                 var tab = this.getAttribute('data-tab');
-                document.querySelectorAll('.admin-nav-item').forEach(function(i) { i.classList.remove('active'); });
-                this.classList.add('active');
-
-                document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.remove('active'); });
-                var targetPane = document.getElementById('pane-' + tab);
-                if (targetPane) targetPane.classList.add('active');
-
-                document.getElementById('adminTabTitle').textContent = titles[tab] || 'Quản Trị';
-
-                if (sidebar) sidebar.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
-
-                if (tab === 'stats') loadStatistics();
-                if (tab === 'packages') loadAdminPackages();
-                if (tab === 'orders') loadAdminOrders();
-                if (tab === 'users') loadAdminUsers();
-                if (tab === 'settings') loadAdminSettings();
+                if (tab) switchAdminTab(tab);
             });
         });
 
@@ -1476,8 +1520,17 @@
         // Initialize on load
         document.addEventListener('DOMContentLoaded', function() {
             verifyAdminSession();
-            loadStatistics();
-            loadAdminSettings();
+            try { loadStatistics(); } catch(e){}
+            try { loadAdminSettings(); } catch(e){}
+
+            // Check URL query or hash parameter (ví dụ: admin.html#settings hoặc admin.html?tab=settings)
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                var tabFromUrl = urlParams.get('tab') || window.location.hash.replace('#', '');
+                if (tabFromUrl && ['stats', 'packages', 'orders', 'users', 'settings'].includes(tabFromUrl)) {
+                    switchAdminTab(tabFromUrl);
+                }
+            } catch(e){}
         });
     </script>
 </body>

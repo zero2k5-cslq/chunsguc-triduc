@@ -901,6 +901,11 @@
                     <i class="fas fa-user-shield" style="color: #ec4899;"></i>
                     <span>Chính sách bảo mật</span>
                 </a>
+
+                <a href="admin.html" class="footer-link-item" title="Đăng nhập trang quản trị Admin">
+                    <i class="fas fa-shield-halved" style="color: #f59e0b;"></i>
+                    <span>Trang Quản Trị Admin</span>
+                </a>
             </div>
         </footer>
     </main>
@@ -2108,8 +2113,12 @@
                 if (logoutBtn) logoutBtn.style.display = 'flex';
 
                 if (authContainer) {
+                    var adminBtnHtml = currentUser.role === 'ROLE_ADMIN'
+                        ? `<a href="admin.html" class="btn btn-sm btn-primary" style="font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706); border: none;"><i class="fas fa-shield-alt"></i> Quản Trị</a>`
+                        : '';
                     authContainer.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 8px;">
+                            ${adminBtnHtml}
                             <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary); padding: 6px 12px; background: color-mix(in srgb, var(--color-primary) 12%, transparent); border-radius: var(--radius-md);">
                                 <i class="fas fa-user-check"></i> ${currentUser.username} (${(currentUser.balance || 0).toLocaleString('vi-VN')} đ)
                             </span>
