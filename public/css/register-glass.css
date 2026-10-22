@@ -1,0 +1,49 @@
+
+
+
+.input-hint {
+    display: block;
+    margin-top: 6px;
+    margin-left: 2px;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    line-height: 1.4;
+    transition: opacity 0.3s;
+}
+
+.input-hint i {
+    margin-right: 4px;
+    color: var(--color-accent);
+}
+
+.input-group:focus-within .input-hint {
+    opacity: 1;
+}
+
+
+#termsModal, #privacyModal {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 0.3s ease;
+}
+
+#termsModal .glass-card, #privacyModal .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--glass-shadow), 0 20px 40px rgba(0,0,0,0.2);
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#termsModal h2, #privacyModal h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+}
+
+
+@media (max-width: 768px) {
+    .input-hint {
+        font-size: 0.7rem;
+    }
+}
+

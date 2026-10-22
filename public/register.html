@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - Chung sức Trí Đức</title>
+    
+    <meta name="description" content="Tạo tài khoản Chung sức Trí Đức để bắt đầu sử dụng dịch vụ chạy sự kiện Liên Quân.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Chung sức Trí Đức">
+    <meta property="og:title" content="Đăng Ký - Chung sức Trí Đức">
+    <meta property="og:description" content="Tạo tài khoản Chung sức Trí Đức để bắt đầu sử dụng dịch vụ.">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:image" content="uploads/logo.png">
+
+    <link href="css/dynamic-theme.css" rel="stylesheet">
+    <link href="css/glass-theme.css" rel="stylesheet">
+    <link href="css/login-glass.css" rel="stylesheet">
+    <link href="css/register-glass.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="uploads/favicon.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('theme-preference');
+                if (!theme) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <button class="theme-toggle theme-toggle-login" id="themeToggleBtn" title="Chuyển chế độ giao diện">
+            <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+            <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+        </button>
+        
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <img src="uploads/logo.png" alt="Logo Chung sức Trí Đức" style="max-width: 100%; max-height: 100%; border-radius: var(--radius-xl);">
+                </div>
+                <h1 class="login-title">Chung sức Trí Đức</h1>
+                <p class="login-subtitle">Đăng ký tài khoản mới</p>
+            </div>
+            
+            <div id="alertBox"></div>
+            
+            <form id="registerForm" autocomplete="off">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            class="form-control input-with-icon" 
+                            id="reg_username" 
+                            placeholder="Tên đăng nhập"
+                            autocomplete="username"
+                            minlength="6"
+                            maxlength="64"
+                            pattern="[a-zA-Z0-9._-]+"
+                            title="Từ 6-64 ký tự, chỉ được chứa chữ, số, dấu chấm (.), gạch ngang (-) và gạch dưới (_)"
+                            required
+                        >
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                    <small class="input-hint">
+                        <i class="fas fa-info-circle"></i> 6-64 ký tự: chữ, số, . - _
+                    </small>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            class="form-control input-with-icon" 
+                            id="reg_password" 
+                            placeholder="Mật khẩu"
+                            autocomplete="new-password"
+                            minlength="8"
+                            maxlength="128"
+                            title="Tối thiểu 8 ký tự để đảm bảo an toàn"
+                            required
+                        >
+                        <i class="fas fa-lock input-icon"></i>
+                        <button type="button" class="password-toggle" id="toggleRegPassword">
+                            <i class="fas fa-eye" id="toggleRegPasswordIcon"></i>
+                        </button>
+                    </div>
+                    <small class="input-hint">
+                        <i class="fas fa-shield-alt"></i> Tối thiểu 8 - 12 ký tự
+                    </small>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            class="form-control input-with-icon" 
+                            id="reg_password_confirm" 
+                            placeholder="Nhập lại mật khẩu"
+                            autocomplete="new-password"
+                            minlength="8"
+                            maxlength="128"
+                            required
+                        >
+                        <i class="fas fa-lock input-icon"></i>
+                        <button type="button" class="password-toggle" id="toggleRegPasswordConfirm">
+                            <i class="fas fa-eye" id="toggleRegPasswordConfirmIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            class="form-control input-with-icon" 
+                            id="reg_email" 
+                            placeholder="Địa chỉ Email (không bắt buộc)"
+                            autocomplete="email"
+                            maxlength="256"
+                        >
+                        <i class="fas fa-envelope input-icon"></i>
+                    </div>
+                    <small class="input-hint">
+                        <i class="fas fa-info-circle"></i> Không bắt buộc (dùng để khôi phục mật khẩu)
+                    </small>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input
+                            type="tel"
+                            class="form-control input-with-icon"
+                            id="reg_phone"
+                            placeholder="Số điện thoại (bắt buộc)"
+                            autocomplete="tel"
+                            inputmode="tel"
+                            maxlength="20"
+                            required
+                            title="Số điện thoại di động Việt Nam, VD: 0912345678"
+                        >
+                        <i class="fas fa-phone input-icon"></i>
+                    </div>
+                    <small class="input-hint">
+                        <i class="fas fa-info-circle"></i> Số di động VN, VD: 0912345678
+                    </small>
+                </div>
+                
+                <div class="input-group" style="margin-bottom: var(--space-md);">
+                    <label class="checkbox-label" style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" id="reg_agree_terms" checked style="margin-top: 3px; flex-shrink: 0;">
+                        <span style="opacity: 0.85;">Tôi đồng ý với <a href="javascript:void(0)" id="showTermsBtn" style="color: var(--color-accent); font-weight: 600;">Điều khoản dịch vụ</a> và <a href="javascript:void(0)" id="showPrivacyBtn" style="color: var(--color-accent); font-weight: 600;">Chính sách bảo mật</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login" id="btnRegister" style="margin-top: var(--space-md);">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Đăng ký</span>
+                </button>
+                
+                <div style="text-align: center; margin-top: var(--space-lg); font-size: 0.875rem;">
+                    <span style="opacity: 0.7;">Đã có tài khoản?</span> 
+                    <a href="login.html" style="color: var(--color-accent); font-weight: 600;">Đăng nhập ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal: Điều khoản dịch vụ -->
+    <div class="app-popup" id="termsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="app-popup-box glass-card" style="max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div class="app-popup-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
+                <h2 class="app-popup-title" style="font-size: 1.25rem;"><i class="fas fa-file-contract" style="color: var(--color-primary); margin-right: 8px;"></i> Điều khoản dịch vụ</h2>
+                <button aria-label="Đóng" class="app-popup-close" type="button" id="closeTermsModal" style="background: none; border: none; font-size: 1.2rem; color: var(--color-foreground); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="termsContent" style="line-height: 1.7; opacity: 0.9; font-size: 0.9rem;">
+                <h3>ĐIỀU KHOẢN DỊCH VỤ</h3>
+                <p><em>Khi đăng ký hoặc sử dụng website, bạn đồng ý với các điều dưới đây:</em></p>
+                <h4 style="margin-top: 14px; color: var(--color-primary);">1. Website làm gì?</h4>
+                <ul style="padding-left: 20px;">
+                    <li>Website giúp bạn <strong>tự động chạy mã mời</strong> trong sự kiện mời bạn bè của trò chơi Liên Quân Mobile. Bạn nhập mã và số lượt, hệ thống sẽ chạy cho bạn.</li>
+                    <li>Tiền bạn trả là <strong>phí dịch vụ chạy mã</strong>, không phải tiền mua vật phẩm, tài khoản hay điểm trong game.</li>
+                    <li>Phần thưởng (nếu có) do <strong>nhà phát hành trò chơi</strong> trao theo thể lệ sự kiện.</li>
+                </ul>
+                <h4 style="margin-top: 14px; color: var(--color-primary);">2. Lưu ý về trò chơi</h4>
+                <ul style="padding-left: 20px;">
+                    <li>Website <strong>không liên quan</strong> trực tiếp đến nhà phát hành trò chơi.</li>
+                    <li>Website <strong>không mua bán</strong> tài khoản game hay vật phẩm ảo trái phép.</li>
+                </ul>
+                <h4 style="margin-top: 14px; color: var(--color-primary);">3. Nạp tiền & Thanh toán</h4>
+                <ul style="padding-left: 20px;">
+                    <li><strong>Chuyển khoản:</strong> ghi <strong>đúng nội dung chuyển khoản</strong> để được cộng tự động trong 30 giây.</li>
+                    <li><strong>Thẻ cào:</strong> chọn <strong>đúng mệnh giá</strong> để gạch thẻ chính xác.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Chính sách bảo mật -->
+    <div class="app-popup" id="privacyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.65); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div class="app-popup-box glass-card" style="max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div class="app-popup-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
+                <h2 class="app-popup-title" style="font-size: 1.25rem;"><i class="fas fa-user-shield" style="color: var(--color-primary); margin-right: 8px;"></i> Chính sách bảo mật</h2>
+                <button aria-label="Đóng" class="app-popup-close" type="button" id="closePrivacyModal" style="background: none; border: none; font-size: 1.2rem; color: var(--color-foreground); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="privacyContent" style="line-height: 1.7; opacity: 0.9; font-size: 0.9rem;">
+                <h3>CHÍNH SÁCH BẢO MẬT</h3>
+                <p><em>Trang này cho bạn biết website bảo vệ dữ liệu cá nhân của bạn như thế nào:</em></p>
+                <h4 style="margin-top: 14px; color: var(--color-primary);">1. Dữ liệu được bảo vệ</h4>
+                <ul style="padding-left: 20px;">
+                    <li>Mật khẩu của bạn được mã hóa an toàn nhiều lớp. Không ai (kể cả Admin) xem được mật khẩu của bạn.</li>
+                    <li>Chúng tôi <strong>không bao giờ</strong> hỏi mật khẩu game hay thông tin ngân hàng của bạn.</li>
+                </ul>
+                <h4 style="margin-top: 14px; color: var(--color-primary);">2. Cam kết không chia sẻ</h4>
+                <p>Chúng tôi không bán hay cung cấp thông tin tài khoản cho bất kỳ bên thứ ba nào.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle logic
+        var themeToggleBtn = document.getElementById('themeToggleBtn');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                var next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme-preference', next);
+            });
+        }
+
+        // Toggle password reveals
+        function setupToggle(btnId, inputId, iconId) {
+            var btn = document.getElementById(btnId);
+            var input = document.getElementById(inputId);
+            var icon = document.getElementById(iconId);
+            if (btn && input && icon) {
+                btn.addEventListener('click', function() {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+        }
+        setupToggle('toggleRegPassword', 'reg_password', 'toggleRegPasswordIcon');
+        setupToggle('toggleRegPasswordConfirm', 'reg_password_confirm', 'toggleRegPasswordConfirmIcon');
+
+        // Modal handlers
+        var termsModal = document.getElementById('termsModal');
+        var privacyModal = document.getElementById('privacyModal');
+        document.getElementById('showTermsBtn').addEventListener('click', function() { termsModal.style.display = 'flex'; });
+        document.getElementById('closeTermsModal').addEventListener('click', function() { termsModal.style.display = 'none'; });
+        document.getElementById('showPrivacyBtn').addEventListener('click', function() { privacyModal.style.display = 'flex'; });
+        document.getElementById('closePrivacyModal').addEventListener('click', function() { privacyModal.style.display = 'none'; });
+
+        [termsModal, privacyModal].forEach(function(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        });
+
+        // Alert helper
+        function showAlert(msg, type) {
+            var alertBox = document.getElementById('alertBox');
+            var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            var color = type === 'success' ? 'var(--color-success)' : 'var(--color-danger)';
+            alertBox.innerHTML = `
+                <div style="padding: 12px 16px; border-radius: var(--radius-md); background: color-mix(in srgb, ${color} 15%, transparent); border: 1px solid ${color}; color: ${color}; margin-bottom: var(--space-md); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas ${icon}"></i>
+                    <span>${msg}</span>
+                </div>
+            `;
+        }
+
+        // Registration form submit
+        var registerForm = document.getElementById('registerForm');
+        var btnRegister = document.getElementById('btnRegister');
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var username = document.getElementById('reg_username').value.trim();
+                var password = document.getElementById('reg_password').value;
+                var passwordConfirm = document.getElementById('reg_password_confirm').value;
+                var email = document.getElementById('reg_email').value.trim();
+                var phone = document.getElementById('reg_phone').value.trim();
+                var agree = document.getElementById('reg_agree_terms').checked;
+
+                if (!agree) {
+                    showAlert('Bạn cần đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!', 'danger');
+                    return;
+                }
+
+                if (password !== passwordConfirm) {
+                    showAlert('Mật khẩu nhập lại không khớp!', 'danger');
+                    return;
+                }
+
+                btnRegister.disabled = true;
+                btnRegister.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Đang tạo tài khoản...</span>';
+                document.getElementById('alertBox').innerHTML = '';
+
+                try {
+                    var res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password,
+                            email: email,
+                            phone: phone
+                        })
+                    });
+                    var data = await res.json();
+
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Đăng ký thành công!',
+                            text: 'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
+                            confirmButtonText: 'Đăng nhập ngay'
+                        }).then(function() {
+                            window.location.href = 'login.html';
+                        });
+                    } else {
+                        showAlert(data.message || 'Đăng ký không thành công!', 'danger');
+                        btnRegister.disabled = false;
+                        btnRegister.innerHTML = '<i class="fas fa-user-plus"></i> <span>Đăng ký</span>';
+                    }
+                } catch (err) {
+                    showAlert('Lỗi kết nối máy chủ! Vui lòng thử lại.', 'danger');
+                    btnRegister.disabled = false;
+                    btnRegister.innerHTML = '<i class="fas fa-user-plus"></i> <span>Đăng ký</span>';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

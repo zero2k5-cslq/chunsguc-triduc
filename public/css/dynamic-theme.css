@@ -1,0 +1,9 @@
+:root, [data-theme="dark"] {
+  --color-primary: #0091ff !important;
+  --color-accent: #0091ff !important;
+  --font-heading: 'Inter', sans-serif !important;
+  --font-body: 'Inter', sans-serif !important;
+}
+.progress-bar.is-done { background: #22C55E; }
+html .badge.badge-done { background: color-mix(in srgb, #22C55E 15%, transparent); border-color: color-mix(in srgb, #22C55E 35%, transparent); color: #22C55E; }
+html[data-theme="dark"] .badge.badge-done { background: color-mix(in srgb, #22C55E 22%, transparent); color: #22C55E; }

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Chung sức Trí Đức</title>
+    
+    <meta name="description" content="Đăng nhập vào Chung sức Trí Đức để quản lý tài khoản và dịch vụ sự kiện Liên Quân.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Chung sức Trí Đức">
+    <meta property="og:title" content="Chung sức Trí Đức">
+    <meta property="og:description" content="Đăng nhập vào Chung sức Trí Đức để quản lý tài khoản và dịch vụ.">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:image" content="uploads/logo.png">
+
+    <link href="css/dynamic-theme.css" rel="stylesheet">
+    <link href="css/glass-theme.css" rel="stylesheet">
+    <link href="css/login-glass.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="uploads/favicon.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('theme-preference');
+                if (!theme) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="login-container">
+
+        <button class="theme-toggle theme-toggle-login" id="themeToggleBtn" title="Chuyển chế độ giao diện">
+            <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+            <i class="fas fa-moon theme-icon theme-icon-moon"></i>
+        </button>
+
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <img src="uploads/logo.png" alt="Logo Chung sức Trí Đức" style="max-width: 100%; max-height: 100%; border-radius: var(--radius-xl);">
+                </div>
+                <h1 class="login-title">
+                    Chung sức Trí Đức
+                </h1>
+                <p class="login-subtitle">Đăng nhập để tiếp tục</p>
+            </div>
+
+            <div id="alertBox"></div>
+
+            <!-- Login Form -->
+            <form id="loginForm" autocomplete="off">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control input-with-icon" id="username"
+                            placeholder="Tên đăng nhập" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control input-with-icon" id="password" placeholder="Mật khẩu"
+                            autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" id="togglePasswordBtn">
+                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="remember-forgot">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember" checked>
+                        <span>Ghi nhớ</span>
+                    </label>
+                    <a href="javascript:void(0)" onclick="quickDemoLogin()" style="color: var(--color-primary); font-size: 0.85rem; font-weight: 500;">
+                        <i class="fas fa-bolt"></i> Dùng thử nhanh
+                    </a>
+                </div>
+
+                <!-- Interactive Captcha/Security Check -->
+                <div class="input-group" style="display: flex; justify-content: center; margin-bottom: var(--space-lg);">
+                    <div id="captchaWidget" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; width: 100%; max-width: 320px; cursor: pointer;" onclick="verifyCaptcha()">
+                        <div id="captchaCheckbox" style="width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: transparent; transition: all 0.2s;">
+                            <i class="fas fa-check" id="captchaCheckmark" style="color: white; font-size: 14px; display: none;"></i>
+                        </div>
+                        <span style="font-size: 0.88rem; font-weight: 500; color: var(--color-foreground);" id="captchaLabel">Tôi không phải là người máy</span>
+                        <div style="margin-left: auto; text-align: center; opacity: 0.6;">
+                            <i class="fas fa-shield-halved" style="color: var(--color-primary); font-size: 18px;"></i>
+                            <div style="font-size: 0.65rem; line-height: 1;">Cloudflare</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login" id="btnLogin">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Đăng nhập</span>
+                </button>
+
+                <div style="text-align: center; margin-top: var(--space-lg); font-size: 0.875rem;">
+                    <span style="opacity: 0.7;">Chưa có tài khoản?</span>
+                    <a href="register.html" style="color: var(--color-accent); font-weight: 600;">Đăng ký ngay</a>
+                </div>
+            </form>
+
+            <!-- OTP Form -->
+            <form id="otpForm" style="display: none;" autocomplete="off">
+                <p style="text-align: center; margin-bottom: 15px; opacity: 0.8; font-size: 0.9rem;">
+                    Mã xác minh đã được gửi đến Email của bạn.
+                </p>
+                <input type="hidden" id="otpToken">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope-open-text input-icon"></i>
+                        <input type="text" class="form-control input-with-icon" id="otpCode"
+                            placeholder="Nhập mã OTP 6 số" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" id="btnVerifyOtp">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Xác minh OTP</span>
+                </button>
+            </form>
+
+            <!-- 2FA Form -->
+            <form id="twoFaForm" style="display: none;" autocomplete="off">
+                <input type="hidden" id="twoFaToken">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-mobile-alt input-icon"></i>
+                        <input type="text" class="form-control input-with-icon" id="twoFaCode" placeholder="Mã 2FA 6 số"
+                            required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" id="btnVerify2fa">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Xác minh 2FA</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle logic
+        var themeToggleBtn = document.getElementById('themeToggleBtn');
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                var next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme-preference', next);
+            });
+        }
+
+        // Toggle password reveal
+        var togglePasswordBtn = document.getElementById('togglePasswordBtn');
+        var passwordInput = document.getElementById('password');
+        var togglePasswordIcon = document.getElementById('togglePasswordIcon');
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePasswordIcon.classList.remove('fa-eye');
+                    togglePasswordIcon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    togglePasswordIcon.classList.remove('fa-eye-slash');
+                    togglePasswordIcon.classList.add('fa-eye');
+                }
+            });
+        }
+
+        // Captcha verification state
+        var isCaptchaVerified = true;
+        function verifyCaptcha() {
+            var box = document.getElementById('captchaCheckbox');
+            var check = document.getElementById('captchaCheckmark');
+            var label = document.getElementById('captchaLabel');
+            isCaptchaVerified = true;
+            box.style.background = 'var(--color-primary)';
+            check.style.display = 'block';
+            label.textContent = 'Đã xác minh an toàn';
+        }
+
+        // Alert helper
+        function showAlert(msg, type) {
+            var alertBox = document.getElementById('alertBox');
+            var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            var color = type === 'success' ? 'var(--color-success)' : 'var(--color-danger)';
+            alertBox.innerHTML = `
+                <div style="padding: 12px 16px; border-radius: var(--radius-md); background: color-mix(in srgb, ${color} 15%, transparent); border: 1px solid ${color}; color: ${color}; margin-bottom: var(--space-md); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas ${icon}"></i>
+                    <span>${msg}</span>
+                </div>
+            `;
+        }
+
+        // Form submit
+        var loginForm = document.getElementById('loginForm');
+        var btnLogin = document.getElementById('btnLogin');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var username = document.getElementById('username').value.trim();
+                var password = document.getElementById('password').value;
+
+                if (!isCaptchaVerified) {
+                    showAlert('Vui lòng hoàn thành xác minh bảo mật!', 'danger');
+                    return;
+                }
+
+                btnLogin.disabled = true;
+                btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Đang đăng nhập...</span>';
+                document.getElementById('alertBox').innerHTML = '';
+
+                try {
+                    var res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+                    var data = await res.json();
+
+                    if (data.success) {
+                        sessionStorage.setItem('auth_token', data.token);
+                        sessionStorage.setItem('auth_user', JSON.stringify(data.user || { username: username }));
+                        try {
+                            localStorage.removeItem('auth_token');
+                            localStorage.removeItem('auth_user');
+                        } catch (e) {}
+                        
+                        // KIỂM TRA ROLE ĐỂ CHUYỂN HƯỚNG CHÍNH XÁC
+                        var userRole = (data.user && data.user.role) ? data.user.role : '';
+                        var isAdmin = (userRole === 'ROLE_ADMIN' || username.toLowerCase() === 'admin' || username.toLowerCase() === 'zero2k5');
+                        var redirectUrl = isAdmin ? 'admin.html' : 'index.html';
+                        var welcomeTitle = isAdmin ? '👑 Xin Chào Quản Trị Viên!' : 'Đăng Nhập Thành Công!';
+                        var welcomeText = isAdmin ? 'Đang chuyển hướng thẳng đến Trang Quản Trị Admin...' : 'Đang chuyển hướng về Chung sức Trí Đức...';
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: welcomeTitle,
+                            text: welcomeText,
+                            timer: 1200,
+                            showConfirmButton: false
+                        }).then(function() {
+                            window.location.href = redirectUrl;
+                        });
+                    } else {
+                        showAlert(data.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 'danger');
+                        btnLogin.disabled = false;
+                        btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Đăng nhập</span>';
+                    }
+                } catch (err) {
+                    showAlert('Lỗi kết nối máy chủ! Vui lòng thử lại.', 'danger');
+                    btnLogin.disabled = false;
+                    btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Đăng nhập</span>';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

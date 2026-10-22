@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Thành Công - Chung sức Trí Đức</title>
+
+    <meta name="description" content="Giao dịch thanh toán nạp tiền và đăng ký gói sự kiện thành công tại Chung sức Trí Đức.">
+    <link href="css/dynamic-theme.css" rel="stylesheet">
+    <link href="css/glass-theme.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="uploads/favicon.png">
+
+    <!-- Theme detector -->
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('theme-preference') || 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--color-background);
+            background-image:
+                radial-gradient(circle at 15% 20%, color-mix(in srgb, #22c55e 12%, transparent) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--color-primary) 12%, transparent) 0%, transparent 45%);
+            background-attachment: fixed;
+            font-family: var(--font-body);
+            color: var(--color-foreground);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            box-sizing: border-box;
+        }
+
+        .success-card {
+            max-width: 620px;
+            width: 100%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 36px 32px;
+            text-align: center;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Top glow strip */
+        .success-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #22c55e, #3b82f6, #10b981);
+        }
+
+        /* Animated Success Checkmark */
+        .checkmark-wrapper {
+            width: 86px;
+            height: 86px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .checkmark-circle {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1));
+            border: 2px solid #22c55e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.45);
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 24px rgba(34, 197, 94, 0.35);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(34, 197, 94, 0.65);
+                transform: scale(1.04);
+            }
+        }
+
+        .checkmark-icon {
+            font-size: 2.6rem;
+            color: #22c55e;
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 0.9; transform: scale(1.15); }
+            80% { transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .success-title {
+            font-size: 1.65rem;
+            font-weight: 800;
+            margin: 0 0 8px;
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .success-subtitle {
+            font-size: 0.92rem;
+            opacity: 0.82;
+            margin: 0 0 24px;
+            line-height: 1.5;
+        }
+
+        /* Receipt table container */
+        .receipt-card {
+            background: color-mix(in srgb, var(--color-muted) 45%, transparent);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px dashed var(--glass-border);
+        }
+
+        .receipt-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .receipt-row:first-child {
+            padding-top: 0;
+        }
+
+        .receipt-label {
+            opacity: 0.75;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .receipt-value {
+            font-weight: 600;
+            color: var(--color-foreground);
+            text-align: right;
+        }
+
+        .receipt-value.highlight {
+            color: #22c55e;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .receipt-value.badge-ok {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Action Buttons */
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, var(--color-primary), #2563eb);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 15px 24px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px color-mix(in srgb, var(--color-primary) 40%, transparent);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px color-mix(in srgb, var(--color-primary) 55%, transparent);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-foreground);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: color-mix(in srgb, var(--color-muted) 50%, transparent);
+        }
+
+        .bot-notice {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            margin-bottom: 22px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: var(--color-foreground);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="success-card">
+        <!-- Animated Icon -->
+        <div class="checkmark-wrapper">
+            <div class="checkmark-circle">
+                <i class="fas fa-check checkmark-icon"></i>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <h1 class="success-title">Thanh Toán Thành Công!</h1>
+        <p class="success-subtitle" id="successDesc">
+            Hệ thống <strong>Chung sức Trí Đức</strong> đã xác nhận giao dịch chuyển khoản thành công và gửi thông báo về máy chủ xử lý tự động!
+        </p>
+
+        <!-- Bot Live Notice -->
+        <div class="bot-notice">
+            <i class="fas fa-robot" style="font-size: 1.3rem; color: #3b82f6;"></i>
+            <div>
+                <strong>Hệ thống tự động 24/7:</strong> Dữ liệu đã được ghi nhận vào hàng đợi xử lý. Số dư tài khoản đã được cập nhật ngay lập tức.
+            </div>
+        </div>
+
+        <!-- Receipt Details -->
+        <div class="receipt-card">
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-receipt"></i> Mã giao dịch:</span>
+                <span class="receipt-value" id="displayTxId">#GD9982</span>
+            </div>
+            <div class="receipt-row" id="displayOrderRow">
+                <span class="receipt-label"><i class="fas fa-cube"></i> Đơn hàng:</span>
+                <span class="receipt-value" id="displayOrderId">#CS10283</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-box-open"></i> Gói / Nội dung:</span>
+                <span class="receipt-value" id="displayPackage">Gói Khởi Động Chung Sức</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-money-bill-wave"></i> Số tiền đã thanh toán:</span>
+                <span class="receipt-value highlight" id="displayAmount">20.000 đ</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-user"></i> Tài khoản thụ hưởng:</span>
+                <span class="receipt-value" id="displayUsername">demo</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-wallet"></i> Số dư mới sau giao dịch:</span>
+                <span class="receipt-value" style="color: #22c55e; font-weight: 700;" id="displayBalance">170.000 đ</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-building-columns"></i> Người nhận tiền:</span>
+                <span class="receipt-value">NGUYEN TRI DUC (MB Bank - 0111111111100)</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-clock"></i> Thời gian:</span>
+                <span class="receipt-value" id="displayTime">Vừa xong</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label"><i class="fas fa-shield-halved"></i> Trạng thái hệ thống:</span>
+                <span class="receipt-value badge-ok"><i class="fas fa-check-circle"></i> Đã Gửi Thông Báo Về Hệ Thống</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-group">
+            <!-- Nút Quay lại trang chủ theo yêu cầu của người dùng -->
+            <a href="index.html" class="btn-home" id="btnBackHome">
+                <i class="fas fa-house"></i>
+                <span>Quay Lại Trang Chủ</span>
+            </a>
+
+            <a href="index.html" class="btn-secondary" onclick="viewOrderHistoryRedirect()">
+                <i class="fas fa-list-check"></i>
+                <span>Xem Lịch Sử Đơn Hàng</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Parse Query Parameters
+        function getParams() {
+            var params = {};
+            var queryString = window.location.search.substring(1);
+            var regex = /([^&=]+)=([^&]*)/g;
+            var m;
+            while (m = regex.exec(queryString)) {
+                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+            }
+            return params;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var params = getParams();
+
+            // Populate data
+            var txId = params.txId || ('GD' + Math.floor(1000 + Math.random() * 9000));
+            var orderId = params.orderId || '';
+            var pkgName = params.package || params.packageName || 'Nạp Tiền VietQR Tự Động';
+            var amt = parseInt(params.amount) || 20000;
+            var username = params.username || '';
+            var newBal = params.newBalance ? parseInt(params.newBalance) : null;
+
+            if (!username) {
+                try {
+                    var saved = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user'));
+                    if (saved && saved.username) username = saved.username;
+                } catch (e) { }
+            }
+
+            document.getElementById('displayTxId').textContent = '#' + txId;
+
+            var orderRow = document.getElementById('displayOrderRow');
+            if (orderId) {
+                document.getElementById('displayOrderId').textContent = '#' + orderId;
+                orderRow.style.display = 'flex';
+            } else {
+                orderRow.style.display = 'none';
+            }
+
+            document.getElementById('displayPackage').textContent = pkgName;
+            document.getElementById('displayAmount').textContent = amt.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('displayUsername').textContent = username || 'Khách';
+
+            if (newBal !== null && !isNaN(newBal)) {
+                document.getElementById('displayBalance').textContent = newBal.toLocaleString('vi-VN') + ' đ';
+                // Đồng bộ số dư mới vào auth_user trong sessionStorage
+                try {
+                    var authObj = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user') || '{}');
+                    if (authObj && authObj.username) {
+                        authObj.balance = newBal;
+                        sessionStorage.setItem('auth_user', JSON.stringify(authObj));
+                    }
+                    localStorage.removeItem('auth_user');
+                    localStorage.removeItem('auth_token');
+                    sessionStorage.setItem('payment_success_toast', 'true');
+                } catch (e) { }
+            } else {
+                document.getElementById('displayBalance').textContent = 'Đã cập nhật';
+            }
+
+            var now = new Date();
+            var dateStr = ('0' + now.getDate()).slice(-2) + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + now.getFullYear() + ' ' +
+                ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2) + ':' + ('0' + now.getSeconds()).slice(-2);
+            document.getElementById('displayTime').textContent = dateStr;
+        });
+
+        function viewOrderHistoryRedirect() {
+            localStorage.setItem('redirect_tab', 'history');
+        }
+    </script>
+</body>
+
+</html>
