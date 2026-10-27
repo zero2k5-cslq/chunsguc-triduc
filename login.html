@@ -263,10 +263,16 @@
                 } catch (err) {
                     // TỰ ĐỘNG CHUYỂN SANG CHẾ ĐỘ XÁC THỰC TRỰC TIẾP (Khi chạy trên Vercel hoặc máy chủ mất mạng)
                     var staticUsers = [
-                        { id: 1, username: 'admin', password: 'admin123', role: 'ROLE_ADMIN', balance: 1000000 },
-                        { id: 2, username: 'zero2k5', password: 'a19032005', role: 'ROLE_ADMIN', balance: 1000000 },
-                        { id: 3, username: 'demo', password: 'demo12345678', role: 'ROLE_USER', balance: 255000 }
+                        { id: 1, username: 'admin', password: 'admin123', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287' },
+                        { id: 2, username: 'zero2k5', password: 'a19032005', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287' },
+                        { id: 3, username: 'demo', password: 'demo12345678', role: 'ROLE_USER', balance: 255000, phone: '0912345678' }
                     ];
+                    try {
+                        var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                        if (localDb.users && Array.isArray(localDb.users) && localDb.users.length > 0) {
+                            staticUsers = localDb.users;
+                        }
+                    } catch(e) {}
                     try {
                         var extra = JSON.parse(localStorage.getItem('registered_users') || '[]');
                         staticUsers = staticUsers.concat(extra);

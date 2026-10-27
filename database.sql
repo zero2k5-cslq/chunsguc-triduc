@@ -148,11 +148,11 @@ INSERT INTO `event_packages` (`id`, `package_code`, `title`, `ticket_count`, `pr
 
 -- 3. Cấu hình hệ thống (Admin, Hotline, Zalo)
 INSERT INTO `system_settings` (`setting_key`, `setting_value`, `description`) VALUES
-('ADMIN_HOTLINE', '0901.234.567', 'Số điện thoại hỗ trợ admin'),
+('ADMIN_HOTLINE', '0372.852.287', 'Số điện thoại hỗ trợ admin'),
 ('ADMIN_ZALO', 'https://zalo.me/triduc1903', 'Đường link Zalo hỗ trợ khách hàng'),
 ('DEFAULT_TICKET_PRICE', '500', 'Đơn giá mỗi vé chạy mã (VNĐ)'),
 ('BANK_NAME', 'MB BANK (Ngân hàng Quân Đội)', 'Tên ngân hàng nhận chuyển khoản'),
-('BANK_ACCOUNT_NUMBER', '0111111111100', 'Số tài khoản ngân hàng'),
+('BANK_ACCOUNT_NUMBER', '01111111111100', 'Số tài khoản ngân hàng'),
 ('BANK_ACCOUNT_NAME', 'NGUYEN TRI DUC', 'Tên chủ tài khoản ngân hàng');
 
 -- 4. Đơn hàng mẫu

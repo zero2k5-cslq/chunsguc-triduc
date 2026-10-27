@@ -1,0 +1,265 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "username": "admin",
+            "password": "admin123",
+            "role": "ROLE_ADMIN",
+            "balance": 1000000,
+            "phone": "0372.852.287",
+            "email": "admin@shopchungsuc.com",
+            "createdAt": "20/10/2026 10:00:00"
+        },
+        {
+            "id": 2,
+            "username": "zero2k5",
+            "password": "a19032005",
+            "role": "ROLE_ADMIN",
+            "balance": 1000000,
+            "phone": "0372.852.287",
+            "email": "zero2k5@shopchungsuc.com",
+            "createdAt": "20/10/2026 10:00:00"
+        },
+        {
+            "id": 3,
+            "username": "demo",
+            "password": "demo12345678",
+            "role": "ROLE_USER",
+            "balance": 255000,
+            "phone": "0912345678",
+            "email": "demo@shopchungsuc.com",
+            "createdAt": "22/10/2026 12:30:00"
+        }
+    ],
+    "packages": [
+        {
+            "id": "PKG_10",
+            "title": "Gói Khởi Động Chung Sức",
+            "ticketCount": 10,
+            "price": 5000,
+            "originalPrice": 6000,
+            "badge": "",
+            "description": "Chạy tự động sự kiện Chung Sức Liên Quân Mobile bằng hệ thống BOT VIP 24/7. Tốc độ siêu tốc trong 1-2 phút, đảm bảo trúng rương trang phục và tướng mở màn.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        },
+        {
+            "id": "PKG_20",
+            "title": "Gói Tiết Kiệm Chung Sức",
+            "ticketCount": 20,
+            "price": 10000,
+            "originalPrice": 12000,
+            "badge": "",
+            "description": "Gói sự kiện phổ biến và được game thủ lựa chọn nhiều nhất. Tương thích toàn bộ sự kiện Chung Sức \u0026 Bắn Bi, cam kết tỷ lệ hoàn thành 100% cực kỳ ổn định.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        },
+        {
+            "id": "PKG_50",
+            "title": "Gói Cao Thủ Siêu Tốc",
+            "ticketCount": 50,
+            "price": 24000,
+            "originalPrice": 28000,
+            "badge": "",
+            "description": "Gói cao cấp ưu đãi đặc biệt với luồng BOT VIP độc quyền. Đẩy tiến độ liên tục hoàn thành trong 3 phút, giúp săn trọn bộ quà tặng sự kiện và mở khóa skin giới hạn.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        },
+        {
+            "id": "PKG_100",
+            "title": "Gói Đại Gia VIP",
+            "ticketCount": 100,
+            "price": 45000,
+            "originalPrice": 55000,
+            "badge": "",
+            "description": "Gói toàn diện chuyên nghiệp dành cho game thủ săn full sự kiện Liên Quân. Ưu tiên hàng chờ số 1 hệ thống, tự động hoàn thành siêu tốc và tiết kiệm chi phí tối đa.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        },
+        {
+            "id": "PKG_BANBI_30",
+            "title": "Gói Bắn Bi Siêu Tốc",
+            "ticketCount": 30,
+            "price": 15000,
+            "originalPrice": 18000,
+            "badge": "",
+            "description": "Thiết kế tối ưu chuyên biệt cho sự kiện Bắn Bi Liên Quân Mobile. Tự động tính toán điểm chuẩn, bắn trúng ô quà VIP không cần canh giờ thủ công.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        },
+        {
+            "id": "PKG_200",
+            "title": "Gói Chiến Tướng Max Binh",
+            "ticketCount": 200,
+            "price": 85000,
+            "originalPrice": 110000,
+            "badge": "",
+            "description": "Gói khủng nhất hệ thống phục vụ cày toàn bộ sự kiện lớn hoặc nhiều tài khoản cùng lúc. BOT VIP đa luồng xử lý đồng thời, bảo hành hoàn thành 100%.",
+            "imageUrl": "uploads/logo.png",
+            "isActive": true
+        }
+    ],
+    "orders": [
+        {
+            "id": "CS86814",
+            "username": "demo",
+            "customerName": "Anh Duc Test",
+            "code": "AOV-TEST-CODE-888",
+            "packageTitle": "Gói Khởi Động Chung Sức",
+            "eventType": "chungsuc",
+            "totalCount": 10,
+            "completedCount": 10,
+            "unitPrice": 500,
+            "price": 5000,
+            "speed": "VIP",
+            "status": "COMPLETED",
+            "createdAt": "23/10/2026 00:08:55"
+        },
+        {
+            "id": "CS10091",
+            "username": "demo",
+            "customerName": "Nguyễn Văn Nam",
+            "code": "AOV-LQ888-VN",
+            "packageTitle": "Gói Tiết Kiệm - 20 Vé Chung Sức",
+            "eventType": "chungsuc",
+            "totalCount": 20,
+            "completedCount": 20,
+            "unitPrice": 500,
+            "price": 10000,
+            "speed": "VIP",
+            "status": "COMPLETED",
+            "createdAt": "22/10/2026 14:15:20"
+        },
+        {
+            "id": "CS10092",
+            "username": "demo",
+            "customerName": "Trần Minh Quang",
+            "code": "BANBI-77992",
+            "packageTitle": "Gói Cao Thủ - 50 Vé Chung Sức",
+            "eventType": "banbi",
+            "totalCount": 50,
+            "completedCount": 50,
+            "unitPrice": 480,
+            "price": 24000,
+            "speed": "VIP",
+            "status": "COMPLETED",
+            "createdAt": "22/10/2026 21:10:05"
+        },
+        {
+            "id": "CS10093",
+            "username": "demo",
+            "customerName": "Lê Hoàng Long",
+            "code": "AOV-CS-CHIENTUONG",
+            "packageTitle": "Gói Khởi Động - 10 Vé Chung Sức",
+            "eventType": "chungsuc",
+            "totalCount": 10,
+            "completedCount": 10,
+            "unitPrice": 500,
+            "price": 5000,
+            "speed": "VIP",
+            "status": "COMPLETED",
+            "createdAt": "22/10/2026 09:30:12"
+        }
+    ],
+    "transactions": [
+        {
+            "id": "GD1847",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 20000,
+            "method": "VietQR (NGUYEN TRI DUC)",
+            "description": "Nạp tiền qua VietQR theo gói [Goi Tiet Kiem] (0111111111100 - NGUYEN TRI DUC)",
+            "status": "SUCCESS",
+            "createdAt": "23/10/2026 01:04:37"
+        },
+        {
+            "id": "GD8181",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 20000,
+            "method": "VietQR (NGUYEN TRI DUC)",
+            "description": "Nạp tiền qua VietQR theo gói [Goi Tiet Kiem] (0111111111100 - NGUYEN TRI DUC)",
+            "status": "SUCCESS",
+            "createdAt": "23/10/2026 00:54:27"
+        },
+        {
+            "id": "GD3238",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 50000,
+            "method": "VietQR (NGUYEN TRI DUC)",
+            "description": "Nạp tiền tự động qua QR NGUYEN TRI DUC (Đã nhận \u0026 xác minh Bill)",
+            "status": "SUCCESS",
+            "createdAt": "23/10/2026 00:08:55"
+        },
+        {
+            "id": "GD8017",
+            "username": "demo",
+            "type": "order",
+            "amount": 5000,
+            "method": "Trừ số dư",
+            "description": "Mua gói: Gói Khởi Động Chung Sức #CS86814 - KH: Anh Duc Test",
+            "status": "SUCCESS",
+            "createdAt": "23/10/2026 00:08:55"
+        },
+        {
+            "id": "GD2329",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 20000,
+            "method": "VietQR MBBank",
+            "description": "Nạp tiền tự động qua VietQR MB Bank",
+            "status": "SUCCESS",
+            "createdAt": "22/10/2026 23:28:29"
+        },
+        {
+            "id": "GD9901",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 100000,
+            "method": "VietQR MBBank",
+            "description": "Nạp tiền tự động qua VietQR MB Bank",
+            "status": "SUCCESS",
+            "createdAt": "22/10/2026 12:35:10"
+        },
+        {
+            "id": "GD9902",
+            "username": "demo",
+            "type": "order",
+            "amount": 10000,
+            "method": "Trừ số dư",
+            "description": "Thanh toán đơn chạy mã Chung Sức #CS10091",
+            "status": "SUCCESS",
+            "createdAt": "22/10/2026 14:15:20"
+        },
+        {
+            "id": "GD9903",
+            "username": "demo",
+            "type": "deposit",
+            "amount": 50000,
+            "method": "VietQR MBBank",
+            "description": "Nạp tiền tự động qua VietQR MB Bank",
+            "status": "SUCCESS",
+            "createdAt": "22/10/2026 20:50:00"
+        },
+        {
+            "id": "GD9904",
+            "username": "demo",
+            "type": "order",
+            "amount": 24000,
+            "method": "Trừ số dư",
+            "description": "Thanh toán đơn chạy mã Bắn Bi #CS10092",
+            "status": "SUCCESS",
+            "createdAt": "22/10/2026 21:10:05"
+        }
+    ],
+    "settings": {
+        "siteName": "Chung sức Trí Đức",
+        "adminPhone": "0372.852.287",
+        "adminZalo": "https://zalo.me/triduc1903",
+        "ticketPrice": 500,
+        "bankName": "MB Bank",
+        "bankAccount": "01111111111100",
+        "bankOwner": "NGUYEN TRI DUC"
+    }
+}

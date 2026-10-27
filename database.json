@@ -1,4 +1,4 @@
-﻿{
+{
     "users": [
         {
             "id": 1,
@@ -6,7 +6,7 @@
             "password": "admin123",
             "role": "ROLE_ADMIN",
             "balance": 1000000,
-            "phone": "0901234567",
+            "phone": "0372.852.287",
             "email": "admin@shopchungsuc.com",
             "createdAt": "20/10/2026 10:00:00"
         },
@@ -16,7 +16,7 @@
             "password": "a19032005",
             "role": "ROLE_ADMIN",
             "balance": 1000000,
-            "phone": "0901234567",
+            "phone": "0372.852.287",
             "email": "zero2k5@shopchungsuc.com",
             "createdAt": "20/10/2026 10:00:00"
         },

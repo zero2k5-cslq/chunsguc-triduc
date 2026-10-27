@@ -1106,22 +1106,55 @@
 
         async function loadPackages() {
             var container = document.getElementById('packagesListContainer');
-            var defaultPackages = [
-                { id: "PKG_10", title: "Gói Khởi Động Chung Sức", ticketCount: 10, price: 5000, originalPrice: 6000, badge: "", imageUrl: "uploads/logo.png", description: "Chạy 10 vé siêu tốc" },
-                { id: "PKG_20", title: "Gói Tiết Kiệm Chung Sức", ticketCount: 20, price: 10000, originalPrice: 12000, badge: "", imageUrl: "uploads/logo.png", description: "Gói phổ biến nhất" },
-                { id: "PKG_50", title: "Gói Cao Thủ Siêu Tốc", ticketCount: 50, price: 24000, originalPrice: 28000, badge: "", imageUrl: "uploads/logo.png", description: "Gói ưu đãi 50 vé" },
-                { id: "PKG_100", title: "Gói Đại Gia VIP", ticketCount: 100, price: 45000, originalPrice: 55000, badge: "", imageUrl: "uploads/logo.png", description: "Gói săn full sự kiện" },
-                { id: "PKG_BANBI_30", title: "Gói Bắn Bi Siêu Tốc", ticketCount: 30, price: 15000, originalPrice: 18000, badge: "", imageUrl: "uploads/logo.png", description: "Chuyên dụng sự kiện Bắn Bi" },
-                { id: "PKG_200", title: "Gói Chiến Tướng Max Binh", ticketCount: 200, price: 85000, originalPrice: 110000, badge: "", imageUrl: "uploads/logo.png", description: "Gói 200 vé ưu đãi khủng" }
-            ];
+            var packages = null;
 
+            // 1. Thử lấy từ Vercel serverless / Spring API
             try {
                 var res = await fetch('/api/packages');
-                var packages = await res.json();
-                renderClientPackages(packages && packages.length > 0 ? packages : defaultPackages, container);
-            } catch (err) {
-                renderClientPackages(defaultPackages, container);
+                if (res.ok) {
+                    var apiPkgs = await res.json();
+                    if (Array.isArray(apiPkgs) && apiPkgs.length > 0) {
+                        packages = apiPkgs;
+                    }
+                }
+            } catch (err) {}
+
+            // 2. Thử lấy từ Live Database trong localStorage (đồng bộ từ Admin)
+            if (!packages || packages.length === 0) {
+                try {
+                    var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                    if (localDb.packages && Array.isArray(localDb.packages) && localDb.packages.length > 0) {
+                        packages = localDb.packages;
+                    }
+                } catch (e) {}
             }
+
+            // 3. Thử lấy trực tiếp từ file database.json được deploy lên web
+            if (!packages || packages.length === 0) {
+                try {
+                    var dbRes = await fetch('database.json');
+                    if (dbRes.ok) {
+                        var dbJson = await dbRes.json();
+                        if (dbJson.packages && Array.isArray(dbJson.packages) && dbJson.packages.length > 0) {
+                            packages = dbJson.packages;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            // 4. Danh sách mặc định nếu các nguồn trên chưa khởi tạo
+            if (!packages || packages.length === 0) {
+                packages = [
+                    { id: "PKG_10", title: "Gói Khởi Động Chung Sức", ticketCount: 10, price: 5000, originalPrice: 6000, badge: "", imageUrl: "uploads/logo.png", description: "Chạy 10 vé siêu tốc" },
+                    { id: "PKG_20", title: "Gói Tiết Kiệm Chung Sức", ticketCount: 20, price: 10000, originalPrice: 12000, badge: "", imageUrl: "uploads/logo.png", description: "Gói phổ biến nhất" },
+                    { id: "PKG_50", title: "Gói Cao Thủ Siêu Tốc", ticketCount: 50, price: 24000, originalPrice: 28000, badge: "", imageUrl: "uploads/logo.png", description: "Gói ưu đãi 50 vé" },
+                    { id: "PKG_100", title: "Gói Đại Gia VIP", ticketCount: 100, price: 45000, originalPrice: 55000, badge: "", imageUrl: "uploads/logo.png", description: "Gói săn full sự kiện" },
+                    { id: "PKG_BANBI_30", title: "Gói Bắn Bi Siêu Tốc", ticketCount: 30, price: 15000, originalPrice: 18000, badge: "", imageUrl: "uploads/logo.png", description: "Chuyên dụng sự kiện Bắn Bi" },
+                    { id: "PKG_200", title: "Gói Chiến Tướng Max Binh", ticketCount: 200, price: 85000, originalPrice: 110000, badge: "", imageUrl: "uploads/logo.png", description: "Gói 200 vé ưu đãi khủng" }
+                ];
+            }
+
+            renderClientPackages(packages, container);
         }
 
         // XỬ LÝ CHỌN GÓI: HIỆN THÔNG BÁO XÁC NHẬN -> TRỪ TIỀN TÀI KHOẢN & TẠO ĐƠN HÀNG
@@ -2228,12 +2261,34 @@
 
         async function fetchSettings() {
             var data = null;
+            // 1. Thử lấy từ Vercel serverless / Spring API
             try {
                 var res = await fetch('/api/settings');
                 if (res.ok) {
                     data = await res.json();
                 }
             } catch(e) {}
+
+            // 2. Thử lấy từ Live Database trong localStorage
+            if (!data) {
+                try {
+                    var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                    if (localDb.settings) data = localDb.settings;
+                } catch(e) {}
+            }
+
+            // 3. Thử lấy trực tiếp từ file database.json
+            if (!data) {
+                try {
+                    var dbRes = await fetch('database.json');
+                    if (dbRes.ok) {
+                        var dbJson = await dbRes.json();
+                        if (dbJson.settings) data = dbJson.settings;
+                    }
+                } catch(e) {}
+            }
+
+            // 4. Fallback system_settings
             if (!data) {
                 try {
                     data = JSON.parse(localStorage.getItem('system_settings') || '{}');
