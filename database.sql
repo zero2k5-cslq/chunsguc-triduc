@@ -133,8 +133,8 @@ CREATE TABLE `system_settings` (
 
 -- 1. Tài khoản mặc định: Admin và Demo User
 INSERT INTO `users` (`id`, `username`, `password`, `role`, `balance`, `phone`, `email`, `status`, `created_at`) VALUES
-(1, 'admin', 'admin123', 'ROLE_ADMIN', 1000000, '0901234567', 'admin@shopchungsuc.com', 'ACTIVE', NOW()),
-(2, 'zero2k5', 'a19032005', 'ROLE_ADMIN', 1000000, '0901234567', 'zero2k5@shopchungsuc.com', 'ACTIVE', NOW()),
+(1, 'admin', 'admin123', 'ROLE_ADMIN', 1000000, '0372.852.287', 'admin@shopchungsuc.com', 'ACTIVE', NOW()),
+(2, 'zero2k5', 'a19032005', 'ROLE_ADMIN', 1000000, '0372.852.287', 'zero2k5@shopchungsuc.com', 'ACTIVE', NOW()),
 (3, 'demo', 'demo12345678', 'ROLE_USER', 150000, '0912345678', 'demo@shopchungsuc.com', 'ACTIVE', NOW());
 
 -- 2. Gói sự kiện mẫu ban đầu
