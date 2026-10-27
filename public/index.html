@@ -1279,8 +1279,35 @@
                     if (data.success) {
                         // Cập nhật số dư người dùng ngay lập tức
                         currentUser.balance = data.newBalance;
+                        sessionStorage.setItem('auth_user', JSON.stringify(currentUser));
+                        try { localStorage.setItem('auth_user', JSON.stringify(currentUser)); } catch(e){}
                         updateUserUI();
+
+                        // Đồng bộ trực tiếp vào Live Database (localStorage) để trang Admin và các tab khác tự động cập nhật thống kê
+                        try {
+                            var ldb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                            if (ldb.users) {
+                                var u = ldb.users.find(function(usr){ return usr.username.toLowerCase() === currentUser.username.toLowerCase(); });
+                                if (u) u.balance = currentUser.balance;
+                            }
+                            if (!ldb.orders) ldb.orders = [];
+                            ldb.orders.unshift(data.order);
+                            if (!ldb.transactions) ldb.transactions = [];
+                            ldb.transactions.unshift({
+                                id: 'GD' + Math.floor(1000 + Math.random() * 9000),
+                                username: currentUser.username,
+                                type: 'order',
+                                amount: pkg.price,
+                                method: 'Trừ số dư',
+                                description: 'Thanh toán mua ' + pkg.title + ' (#' + data.order.id + ')',
+                                status: 'SUCCESS',
+                                createdAt: new Date().toLocaleString('vi-VN')
+                            });
+                            localStorage.setItem('app_database', JSON.stringify(ldb));
+                        } catch(e) {}
+
                         loadOrderHistory();
+                        loadTransactions();
 
                         // THÔNG BÁO CHỌN GÓI THÀNH CÔNG
                         Swal.fire({

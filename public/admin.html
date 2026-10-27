@@ -819,12 +819,8 @@
         // =====================================================================
         // CORE LIVE DATABASE ENGINE (ĐỒNG BỘ database.json & LOCALSTORAGE TRÊN VERCEL)
         // =====================================================================
-        async function getLiveDatabase() {
-            if (liveDatabase && liveDatabase.packages && liveDatabase.packages.length > 0) {
-                return liveDatabase;
-            }
-
-            // 1. Kiểm tra localStorage (Dữ liệu đã sửa hoặc nạp gần nhất)
+        async function getLiveDatabase(forceRefresh) {
+            // 1. Luôn ưu tiên đọc từ localStorage để đồng bộ tức thì khi khách mua đơn
             try {
                 var cached = localStorage.getItem('app_database');
                 if (cached) {
@@ -835,6 +831,10 @@
                     }
                 }
             } catch(e) {}
+
+            if (!forceRefresh && liveDatabase && liveDatabase.packages && liveDatabase.packages.length > 0) {
+                return liveDatabase;
+            }
 
             // 2. Tải trực tiếp từ file database.json trên hosting
             try {
@@ -1036,7 +1036,6 @@
             var url = `/api/admin/statistics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
             var tbody = document.getElementById('statTransactionsTbody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu thống kê...</td></tr>';
 
             var data = null;
             try {
@@ -1044,35 +1043,38 @@
                 if (res.ok) data = await res.json();
             } catch (err) {}
 
-            if (!data || !data.success) {
-                var ldb = await getLiveDatabase();
-                var txs = ldb.transactions || [];
-                var orders = ldb.orders || [];
-                var users = ldb.users || [];
-                var totalInc = 0;
-                orders.forEach(function(o) { if (o.status === 'COMPLETED') totalInc += (o.price || 0); });
-                var totalDep = 0;
-                txs.forEach(function(t) { if (t.type === 'deposit') totalDep += (t.amount || 0); });
+            var ldb = await getLiveDatabase();
+            var orders = ldb.orders || [];
+            var users = ldb.users || [];
+            var txs = (data && data.transactions && data.transactions.length > 0) ? data.transactions : (ldb.transactions || []);
 
-                data = {
-                    success: true,
-                    stats: {
-                        totalIncome: totalInc || 190000,
-                        totalDeposit: totalDep || 210000,
-                        totalOrders: orders.length || 4,
-                        completedOrders: orders.filter(function(o) { return o.status === 'COMPLETED'; }).length || 4,
-                        totalUsers: users.length || 3
-                    },
-                    transactions: txs
-                };
-            }
+            // Tự động tính toán tổng doanh thu và tiền nạp từ toàn bộ đơn hàng và giao dịch
+            var totalInc = orders.reduce(function(sum, o) { return sum + (Number(o.price) || 0); }, 0);
+            var totalDep = txs.reduce(function(sum, t) {
+                return sum + (t.type === 'deposit' ? (Number(t.amount) || 0) : 0);
+            }, 0);
+            var runningOrders = orders.filter(function(o) { return o.status === 'RUNNING' || o.status === 'PENDING'; }).length;
+            var completedOrders = orders.filter(function(o) { return o.status === 'COMPLETED'; }).length;
 
-            document.getElementById('statTotalIncome').textContent = data.stats.totalIncome.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('statTotalDeposit').textContent = data.stats.totalDeposit.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('statTotalOrders').textContent = `${data.stats.totalOrders} đơn (${data.stats.completedOrders} xong)`;
-            document.getElementById('statTotalUsers').textContent = data.stats.totalUsers;
+            var finalStats = (data && data.stats) ? data.stats : {};
+            var displayIncome = typeof finalStats.totalIncome === 'number' && finalStats.totalIncome > 0 ? finalStats.totalIncome : totalInc;
+            var displayDeposit = typeof finalStats.totalDeposit === 'number' && finalStats.totalDeposit > 0 ? finalStats.totalDeposit : totalDep;
+            var displayOrders = typeof finalStats.totalOrders === 'number' && finalStats.totalOrders > 0 ? finalStats.totalOrders : orders.length;
+            var displayUsers = typeof finalStats.totalUsers === 'number' && finalStats.totalUsers > 0 ? finalStats.totalUsers : users.length;
+            var displayRunning = typeof finalStats.runningOrders === 'number' ? finalStats.runningOrders : runningOrders;
+            var displayCompleted = typeof finalStats.completedOrders === 'number' ? finalStats.completedOrders : completedOrders;
 
-            renderTransactionsList(data.transactions || [], tbody);
+            var elInc = document.getElementById('statTotalIncome');
+            if (elInc) elInc.textContent = displayIncome.toLocaleString('vi-VN') + ' đ';
+            var elDep = document.getElementById('statTotalDeposit');
+            if (elDep) elDep.textContent = displayDeposit.toLocaleString('vi-VN') + ' đ';
+            var elOrd = document.getElementById('statTotalOrders');
+            if (elOrd) elOrd.textContent = displayOrders + ' đơn (' + displayRunning + ' đang chạy, ' + displayCompleted + ' xong)';
+            var elUsr = document.getElementById('statTotalUsers');
+            if (elUsr) elUsr.textContent = displayUsers;
+
+            renderTransactionsList(txs, tbody);
+            updateDatabaseViewer();
         }
 
         function renderTransactionsList(transactions, tbody) {
@@ -1289,20 +1291,28 @@
         async function loadAdminOrders() {
             var status = document.getElementById('adminOrderFilterStatus').value;
             var tbody = document.getElementById('adminOrdersTbody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải đơn hàng...</td></tr>';
 
-            var orders = null;
+            var ldb = await getLiveDatabase();
+            var localOrders = ldb.orders || [];
+
+            var apiOrders = null;
             try {
                 var res = await fetch('/api/admin/orders?status=' + encodeURIComponent(status));
-                if (res.ok) orders = await res.json();
+                if (res.ok) apiOrders = await res.json();
             } catch (err) {}
 
-            if (!orders) {
-                var ldb = await getLiveDatabase();
-                orders = ldb.orders || [];
-                if (status) {
-                    orders = orders.filter(function(o) { return o.status === status; });
-                }
+            var orders = localOrders;
+            if (apiOrders && Array.isArray(apiOrders)) {
+                var map = {};
+                localOrders.concat(apiOrders).forEach(function(o) {
+                    if (o && o.id && !map[o.id]) {
+                        map[o.id] = o;
+                    }
+                });
+                orders = Object.values(map);
+            }
+            if (status) {
+                orders = orders.filter(function(o) { return o.status === status; });
             }
 
             renderOrdersList(orders, tbody);
@@ -1751,6 +1761,26 @@
         } else {
             initAdminPage();
         }
+
+        // TỰ ĐỘNG ĐỒNG BỘ THỜI GIAN THỰC GIỮA CÁC TAB & TRANG
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'app_database' || e.key === 'system_orders' || e.key === 'auth_user') {
+                liveDatabase = null;
+                try {
+                    loadStatistics();
+                    loadAdminOrders();
+                    loadAdminUsers();
+                    updateDatabaseViewer();
+                } catch(err) {}
+            }
+        });
+
+        // Tự động kiểm tra làm mới dữ liệu thống kê ngầm mỗi 5 giây
+        setInterval(function() {
+            try {
+                loadStatistics();
+            } catch(e) {}
+        }, 5000);
     </script>
 </body>
 

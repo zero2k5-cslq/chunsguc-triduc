@@ -314,25 +314,32 @@ module.exports = async (req, res) => {
     }
   }
 
-  // 3. /admin/statistics
+  // 3. /admin/statistics (Tự động thống kê doanh thu, đơn hàng, tiền nạp, thành viên)
   if (pathname === '/admin/statistics') {
-    const totalOrders = (currentDb.orders || []).length;
-    const completedOrders = (currentDb.orders || []).filter(o => o.status === 'COMPLETED').length;
-    let totalIncome = 0;
-    (currentDb.orders || []).forEach(o => { if (o.status === 'COMPLETED') totalIncome += (o.price || 0); });
-    let totalDeposit = 0;
-    (currentDb.transactions || []).forEach(t => { if (t.type === 'deposit') totalDeposit += (t.amount || 0); });
+    const orders = currentDb.orders || [];
+    const transactions = currentDb.transactions || [];
+    const users = currentDb.users || [];
+
+    // Tổng doanh thu: Tính tổng toàn bộ giá trị đơn hàng khách đã mua
+    const totalIncome = orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
+    // Tổng tiền nạp: Tính tổng tất cả giao dịch nạp tiền
+    const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const totalOrders = orders.length;
+    const runningOrders = orders.filter(o => o.status === 'RUNNING' || o.status === 'PENDING').length;
+    const completedOrders = orders.filter(o => o.status === 'COMPLETED').length;
+    const totalUsers = users.length;
 
     return res.status(200).json({
       success: true,
       stats: {
-        totalIncome: totalIncome || 190000,
-        totalDeposit: totalDeposit || 210000,
-        totalOrders: totalOrders || 4,
-        completedOrders: completedOrders || 4,
-        totalUsers: (currentDb.users || []).length || 3
+        totalIncome: totalIncome,
+        totalDeposit: totalDeposit,
+        totalOrders: totalOrders,
+        runningOrders: runningOrders,
+        completedOrders: completedOrders,
+        totalUsers: totalUsers
       },
-      transactions: currentDb.transactions || []
+      transactions: transactions
     });
   }
 
