@@ -35,7 +35,7 @@
             "username": "duc123",
             "password": "password123456",
             "role": "ROLE_USER",
-            "balance": 0,
+            "balance": 100000,
             "phone": "0372.852.287",
             "email": "duc123@shopchungsuc.com",
             "createdAt": "27/10/2026 23:10:00"

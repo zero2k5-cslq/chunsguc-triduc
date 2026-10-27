@@ -883,7 +883,7 @@
                     { id: 1, username: 'admin', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287', createdAt: '20/10/2026' },
                     { id: 2, username: 'zero2k5', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287', createdAt: '20/10/2026' },
                     { id: 3, username: 'demo', role: 'ROLE_USER', balance: 255000, phone: '0912345678', createdAt: '22/10/2026' },
-                    { id: 4, username: 'duc123', role: 'ROLE_USER', balance: 0, phone: '0372.852.287', createdAt: '27/10/2026' }
+                    { id: 4, username: 'duc123', role: 'ROLE_USER', balance: 100000, phone: '0372.852.287', createdAt: '27/10/2026' }
                 ],
                 packages: [
                     { id: "PKG_10", title: "Gói Khởi Động Chung Sức", ticketCount: 10, price: 5000, originalPrice: 6000, badge: "", imageUrl: "uploads/logo.png", description: "Chạy 10 vé siêu tốc" },
@@ -927,18 +927,33 @@
             }
         }
 
-        // Check Admin Auth
+        // Check Admin Auth - Phân quyền tài khoản
         function verifyAdminSession() {
             var authUser = null;
             try { 
                 authUser = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user')); 
             } catch (e) {}
-            if (!authUser || authUser.role !== 'ROLE_ADMIN') {
-                authUser = { username: 'admin', role: 'ROLE_ADMIN' };
-                sessionStorage.setItem('auth_user', JSON.stringify(authUser));
+            var isAdmin = authUser && (authUser.role === 'ROLE_ADMIN' || authUser.username === 'admin' || authUser.username === 'zero2k5');
+            if (!isAdmin) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Yêu Cầu Quyền Quản Trị',
+                    text: 'Trang này chỉ dành riêng cho Quản Trị Viên (ROLE_ADMIN). Bạn đang dùng tài khoản khách hàng!',
+                    confirmButtonText: 'Đăng nhập Admin',
+                    showCancelButton: true,
+                    cancelButtonText: 'Về Cửa Hàng User'
+                }).then(function(r) {
+                    if (r.isConfirmed) {
+                        window.location.href = 'login.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                });
+                return false;
             }
             var uElem = document.getElementById('adminCurrentUsername');
             if (uElem) uElem.textContent = authUser.username;
+            return true;
         }
 
         // Global function to switch tabs

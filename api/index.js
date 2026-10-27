@@ -24,7 +24,7 @@ function getDatabase() {
       { id: 1, username: 'admin', password: 'admin123', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287' },
       { id: 2, username: 'zero2k5', password: 'a19032005', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287' },
       { id: 3, username: 'demo', password: 'demo12345678', role: 'ROLE_USER', balance: 255000, phone: '0912345678' },
-      { id: 4, username: 'duc123', password: 'password123456', role: 'ROLE_USER', balance: 0, phone: '0372.852.287' }
+      { id: 4, username: 'duc123', password: 'password123456', role: 'ROLE_USER', balance: 100000, phone: '0372.852.287' }
     ],
     packages: [
       { id: "PKG_10", title: "Gói Khởi Động Chung Sức", ticketCount: 10, price: 5000, originalPrice: 6000, badge: "", imageUrl: "uploads/logo.png", isActive: true },
@@ -452,7 +452,7 @@ module.exports = async (req, res) => {
       phone: body.phone || '',
       email: body.email || '',
       role: 'ROLE_USER',
-      balance: 0,
+      balance: 50000,
       createdAt: new Date().toLocaleDateString('vi-VN')
     };
     currentDb.users.push(newUser);

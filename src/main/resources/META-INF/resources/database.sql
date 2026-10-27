@@ -1,6 +1,6 @@
 ﻿-- ==============================================================================
 -- CƠ SỞ DỮ LIỆU MYSQL: HỆ THỐNG CHUNG SỨC TỰ ĐỘNG LIÊN QUÂN MOBILE
--- Tự động đồng bộ từ database.json vào lúc: 27/10/2026 23:15:02
+-- Tự động đồng bộ từ database.json vào lúc: 27/10/2026 23:39:06
 -- ==============================================================================
 
 CREATE DATABASE IF NOT EXISTS `chungsuc_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -97,7 +97,7 @@ INSERT INTO `users` (`id`, `username`, `password`, `role`, `balance`, `phone`, `
 (1, 'admin', 'admin123', 'ROLE_ADMIN', 1000000, '0372.852.287', 'admin@shopchungsuc.com', 'ACTIVE', NOW()),
 (2, 'zero2k5', 'a19032005', 'ROLE_ADMIN', 1000000, '0372.852.287', 'zero2k5@shopchungsuc.com', 'ACTIVE', NOW()),
 (3, 'demo', 'demo12345678', 'ROLE_USER', 255000, '0912345678', 'demo@shopchungsuc.com', 'ACTIVE', NOW()),
-(4, 'duc123', 'password123456', 'ROLE_USER', 0, '0372.852.287', 'duc123@shopchungsuc.com', 'ACTIVE', NOW());
+(4, 'duc123', 'password123456', 'ROLE_USER', 100000, '0372.852.287', 'duc123@shopchungsuc.com', 'ACTIVE', NOW());
 
 -- 2. DỮ LIỆU GÓI SỰ KIỆN
 INSERT INTO `event_packages` (`id`, `package_code`, `title`, `ticket_count`, `price`, `original_price`, `badge`, `description`, `image_url`, `is_active`, `display_order`) VALUES

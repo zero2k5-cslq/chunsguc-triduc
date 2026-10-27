@@ -2057,6 +2057,17 @@
                 var list = await res.json();
 
                 if (!list || list.length === 0) {
+                    try {
+                        var ldb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                        if (ldb.transactions) {
+                            list = ldb.transactions.filter(function(t) {
+                                return (t.username || '').toLowerCase() === currentUser.username.toLowerCase();
+                            });
+                        }
+                    } catch(e) {}
+                }
+
+                if (!list || list.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; opacity: 0.7;">Chưa có giao dịch phát sinh nào cho tài khoản này.</td></tr>';
                     return;
                 }
@@ -2103,6 +2114,17 @@
             try {
                 var res = await fetch('/api/chungsuc/history?username=' + encodeURIComponent(currentUser.username));
                 var orders = await res.json();
+
+                if (!orders || orders.length === 0) {
+                    try {
+                        var ldbO = JSON.parse(localStorage.getItem('app_database') || '{}');
+                        if (ldbO.orders) {
+                            orders = ldbO.orders.filter(function(o) {
+                                return (o.username || '').toLowerCase() === currentUser.username.toLowerCase();
+                            });
+                        }
+                    } catch(e) {}
+                }
 
                 if (!orders || orders.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; opacity: 0.7;">Bạn chưa có mã nào đang chạy. Hãy bấm <a href="javascript:void(0)" onclick="switchTab(\'chungsuc\')" style="color: var(--color-primary); font-weight: 600;">Sự kiện chung sức</a> để tạo đơn!</td></tr>';
@@ -2185,8 +2207,13 @@
                 var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
                 if (localDb.users) {
                     var found = localDb.users.find(function(u) { return u.username.toLowerCase() === currentUser.username.toLowerCase(); });
-                    if (found && typeof found.balance !== 'undefined') {
-                        currentUser.balance = found.balance;
+                    if (found) {
+                        if (typeof found.balance !== 'undefined' && found.balance > (currentUser.balance || 0)) {
+                            currentUser.balance = found.balance;
+                        } else if (typeof currentUser.balance !== 'undefined') {
+                            found.balance = currentUser.balance;
+                            localStorage.setItem('app_database', JSON.stringify(localDb));
+                        }
                     }
                 }
             } catch(e) {}
