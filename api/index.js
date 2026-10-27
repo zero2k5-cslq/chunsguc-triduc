@@ -113,6 +113,196 @@ module.exports = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Đã xóa gói sự kiện!' });
   }
 
+  // 1.5. /packages/purchase (Mua gói sự kiện)
+  if (pathname === '/packages/purchase') {
+    const pkg = (currentDb.packages || []).find(p => p.id === body.packageId);
+    if (!pkg) {
+      return res.status(404).json({ success: false, message: 'Gói sự kiện không tồn tại!' });
+    }
+    const username = (body.username || '').trim();
+    let user = (currentDb.users || []).find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      user = { id: Date.now(), username: username || 'demo', role: 'ROLE_USER', balance: 255000 };
+      if (!currentDb.users) currentDb.users = [];
+      currentDb.users.push(user);
+    }
+    if ((user.balance || 0) < pkg.price) {
+      return res.status(400).json({ success: false, message: 'Số dư không đủ để mua gói này!' });
+    }
+    user.balance = (user.balance || 0) - pkg.price;
+    const orderId = 'CS' + Math.floor(10000 + Math.random() * 90000);
+    const newOrder = {
+      id: orderId,
+      orderCode: orderId,
+      username: user.username,
+      customerName: body.customerName || user.username,
+      eventCode: body.code || 'AOV-VIP',
+      packageId: pkg.id,
+      packageTitle: pkg.title,
+      ticketCount: pkg.ticketCount,
+      totalCount: pkg.ticketCount,
+      completedCount: Math.floor(pkg.ticketCount * 0.2),
+      unitPrice: Math.round(pkg.price / pkg.ticketCount),
+      price: pkg.price,
+      status: 'RUNNING',
+      speed: 'VIP',
+      createdAt: new Date().toLocaleString('vi-VN')
+    };
+    if (!currentDb.orders) currentDb.orders = [];
+    currentDb.orders.unshift(newOrder);
+
+    const newTx = {
+      id: 'GD' + Math.floor(1000 + Math.random() * 9000),
+      username: user.username,
+      type: 'order',
+      amount: pkg.price,
+      method: 'Trừ số dư',
+      description: `Thanh toán ${pkg.title} (#${orderId})`,
+      status: 'SUCCESS',
+      createdAt: new Date().toLocaleString('vi-VN')
+    };
+    if (!currentDb.transactions) currentDb.transactions = [];
+    currentDb.transactions.unshift(newTx);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mua gói thành công!',
+      order: newOrder,
+      newBalance: user.balance
+    });
+  }
+
+  // 1.6. /deposit/confirm
+  if (pathname === '/deposit/confirm') {
+    const username = (body.username || '').trim();
+    let user = (currentDb.users || []).find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      user = { id: Date.now(), username: username || 'demo', role: 'ROLE_USER', balance: 0 };
+      if (!currentDb.users) currentDb.users = [];
+      currentDb.users.push(user);
+    }
+    const amt = parseInt(body.amount) || 10000;
+    user.balance = (user.balance || 0) + amt;
+
+    const txId = 'GD' + Math.floor(1000 + Math.random() * 9000);
+    const newTx = {
+      id: txId,
+      username: user.username,
+      type: 'deposit',
+      amount: amt,
+      method: 'VietQR MBBank',
+      description: body.packageName ? `Nạp tiền kích hoạt ${body.packageName}` : 'Nạp tiền tự động qua VietQR MB Bank',
+      status: 'SUCCESS',
+      createdAt: new Date().toLocaleString('vi-VN')
+    };
+    if (!currentDb.transactions) currentDb.transactions = [];
+    currentDb.transactions.unshift(newTx);
+
+    let orderId = null;
+    if (body.packageId || body.packageName) {
+      orderId = 'CS' + Math.floor(10000 + Math.random() * 90000);
+      const pkgOrder = {
+        id: orderId,
+        orderCode: orderId,
+        username: user.username,
+        customerName: body.customerName || user.username,
+        eventCode: body.code || 'AOV-QR',
+        packageId: body.packageId || 'PKG_DIRECT',
+        packageTitle: body.packageName || 'Gói Nạp Trực Tiếp',
+        ticketCount: 20,
+        totalCount: 20,
+        completedCount: 5,
+        price: amt,
+        status: 'RUNNING',
+        speed: 'VIP',
+        createdAt: new Date().toLocaleString('vi-VN')
+      };
+      if (!currentDb.orders) currentDb.orders = [];
+      currentDb.orders.unshift(pkgOrder);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Xác nhận nạp tiền thành công!',
+      newBalance: user.balance,
+      txId: txId,
+      orderId: orderId
+    });
+  }
+
+  // 1.7. /chungsuc/create
+  if (pathname === '/chungsuc/create') {
+    const username = (body.username || '').trim();
+    let user = (currentDb.users || []).find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      user = { id: Date.now(), username: username || 'demo', role: 'ROLE_USER', balance: 255000 };
+      if (!currentDb.users) currentDb.users = [];
+      currentDb.users.push(user);
+    }
+    const totalPrice = parseInt(body.price) || 5000;
+    if ((user.balance || 0) >= totalPrice) {
+      user.balance -= totalPrice;
+    }
+    const orderId = 'CS' + Math.floor(10000 + Math.random() * 90000);
+    const newOrder = {
+      id: orderId,
+      orderCode: orderId,
+      username: user.username,
+      customerName: body.customerName || user.username,
+      eventCode: body.code || 'LQ-VIP',
+      packageTitle: body.packageTitle || 'Chung Sức',
+      ticketCount: parseInt(body.count) || 10,
+      totalCount: parseInt(body.count) || 10,
+      completedCount: Math.floor((parseInt(body.count) || 10) * 0.2),
+      price: totalPrice,
+      status: 'RUNNING',
+      speed: body.speed || 'VIP',
+      createdAt: new Date().toLocaleString('vi-VN')
+    };
+    if (!currentDb.orders) currentDb.orders = [];
+    currentDb.orders.unshift(newOrder);
+
+    const newTx = {
+      id: 'GD' + Math.floor(1000 + Math.random() * 9000),
+      username: user.username,
+      type: 'order',
+      amount: totalPrice,
+      method: 'Trừ số dư',
+      description: `Thanh toán chạy mã #${orderId}`,
+      status: 'SUCCESS',
+      createdAt: new Date().toLocaleString('vi-VN')
+    };
+    if (!currentDb.transactions) currentDb.transactions = [];
+    currentDb.transactions.unshift(newTx);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Khởi tạo đơn hàng thành công!',
+      order: newOrder,
+      newBalance: user.balance
+    });
+  }
+
+  // 1.8. /chungsuc/history
+  if (pathname === '/chungsuc/history') {
+    const username = (url.searchParams.get('username') || '').toLowerCase();
+    let list = currentDb.orders || [];
+    if (username) {
+      list = list.filter(o => (o.username || '').toLowerCase() === username);
+    }
+    return res.status(200).json(list);
+  }
+
+  // 1.9. /deposit/history
+  if (pathname === '/deposit/history') {
+    const username = (url.searchParams.get('username') || '').toLowerCase();
+    let list = currentDb.transactions || [];
+    if (username) {
+      list = list.filter(t => (t.username || '').toLowerCase() === username);
+    }
+    return res.status(200).json(list);
+  }
+
   // 2. /settings or /admin/settings
   if (pathname === '/settings' || pathname === '/admin/settings') {
     if (req.method === 'GET') {
