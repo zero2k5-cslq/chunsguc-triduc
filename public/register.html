@@ -313,6 +313,37 @@
                 btnRegister.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Đang tạo tài khoản...</span>';
                 document.getElementById('alertBox').innerHTML = '';
 
+                var newUser = {
+                    id: Date.now(),
+                    username: username,
+                    password: password,
+                    phone: phone,
+                    email: email || (username + '@shopchungsuc.com'),
+                    role: 'ROLE_USER',
+                    balance: 0,
+                    createdAt: new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN')
+                };
+
+                // Hàm lưu đồng bộ trực tiếp vào cơ sở dữ liệu client & admin
+                function saveNewUserToStorage(user) {
+                    try {
+                        var extraUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                        if (!extraUsers.some(function(u) { return u.username.toLowerCase() === user.username.toLowerCase(); })) {
+                            extraUsers.push(user);
+                            localStorage.setItem('registered_users', JSON.stringify(extraUsers));
+                        }
+                    } catch(e) {}
+
+                    try {
+                        var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                        if (!localDb.users) localDb.users = [];
+                        if (!localDb.users.some(function(u) { return u.username.toLowerCase() === user.username.toLowerCase(); })) {
+                            localDb.users.push(user);
+                            localStorage.setItem('app_database', JSON.stringify(localDb));
+                        }
+                    } catch(e) {}
+                }
+
                 try {
                     var res = await fetch('/api/auth/register', {
                         method: 'POST',
@@ -327,10 +358,11 @@
                     var data = await res.json();
 
                     if (data.success) {
+                        saveNewUserToStorage(data.user ? Object.assign({}, newUser, data.user) : newUser);
                         Swal.fire({
                             icon: 'success',
                             title: 'Đăng ký thành công!',
-                            text: 'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
+                            text: 'Tài khoản của bạn đã được lưu vào hệ thống. Vui lòng đăng nhập.',
                             confirmButtonText: 'Đăng nhập ngay'
                         }).then(function() {
                             window.location.href = 'login.html';
@@ -355,26 +387,7 @@
                         return;
                     }
 
-                    var newUser = {
-                        id: Date.now(),
-                        username: username,
-                        password: password,
-                        phone: phone,
-                        role: 'ROLE_USER',
-                        balance: 0,
-                        createdAt: new Date().toLocaleDateString('vi-VN')
-                    };
-                    extraUsers.push(newUser);
-                    localStorage.setItem('registered_users', JSON.stringify(extraUsers));
-
-                    // Đồng bộ thẳng vào Live Database của Admin
-                    try {
-                        var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
-                        if (localDb.users) {
-                            localDb.users.push(newUser);
-                            localStorage.setItem('app_database', JSON.stringify(localDb));
-                        }
-                    } catch(e) {}
+                    saveNewUserToStorage(newUser);
 
                     Swal.fire({
                         icon: 'success',

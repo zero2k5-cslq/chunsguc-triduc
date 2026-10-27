@@ -823,20 +823,40 @@
         // CORE LIVE DATABASE ENGINE (ĐỒNG BỘ database.json & LOCALSTORAGE TRÊN VERCEL)
         // =====================================================================
         async function getLiveDatabase(forceRefresh) {
-            // 1. Luôn ưu tiên đọc từ localStorage để đồng bộ tức thì khi khách mua đơn
+            // Helper đồng bộ registered_users vào database object
+            function mergeRegisteredUsers(targetDb) {
+                if (!targetDb) return targetDb;
+                if (!targetDb.users) targetDb.users = [];
+                try {
+                    var extra = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                    if (Array.isArray(extra)) {
+                        extra.forEach(function(eu) {
+                            if (eu && eu.username) {
+                                var exist = targetDb.users.find(function(u) { return u.username.toLowerCase() === eu.username.toLowerCase(); });
+                                if (!exist) {
+                                    targetDb.users.push(eu);
+                                }
+                            }
+                        });
+                    }
+                } catch(e) {}
+                return targetDb;
+            }
+
+            // 1. Luôn ưu tiên đọc từ localStorage để đồng bộ tức thì khi khách mua đơn hoặc tạo tài khoản
             try {
                 var cached = localStorage.getItem('app_database');
                 if (cached) {
                     var parsed = JSON.parse(cached);
                     if (parsed && parsed.packages && parsed.packages.length > 0) {
-                        liveDatabase = parsed;
+                        liveDatabase = mergeRegisteredUsers(parsed);
                         return liveDatabase;
                     }
                 }
             } catch(e) {}
 
             if (!forceRefresh && liveDatabase && liveDatabase.packages && liveDatabase.packages.length > 0) {
-                return liveDatabase;
+                return mergeRegisteredUsers(liveDatabase);
             }
 
             // 2. Tải trực tiếp từ file database.json trên hosting
@@ -845,7 +865,7 @@
                 if (res.ok) {
                     var data = await res.json();
                     if (data && data.packages) {
-                        liveDatabase = data;
+                        liveDatabase = mergeRegisteredUsers(data);
                         try { localStorage.setItem('app_database', JSON.stringify(liveDatabase)); } catch(e){}
                         return liveDatabase;
                     }
@@ -857,7 +877,8 @@
                 users: [
                     { id: 1, username: 'admin', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287', createdAt: '20/10/2026' },
                     { id: 2, username: 'zero2k5', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287', createdAt: '20/10/2026' },
-                    { id: 3, username: 'demo', role: 'ROLE_USER', balance: 255000, phone: '0912345678', createdAt: '22/10/2026' }
+                    { id: 3, username: 'demo', role: 'ROLE_USER', balance: 255000, phone: '0912345678', createdAt: '22/10/2026' },
+                    { id: 4, username: 'duc123', role: 'ROLE_USER', balance: 0, phone: '0372.852.287', createdAt: '27/10/2026' }
                 ],
                 packages: [
                     { id: "PKG_10", title: "Gói Khởi Động Chung Sức", ticketCount: 10, price: 5000, originalPrice: 6000, badge: "", imageUrl: "uploads/logo.png", description: "Chạy 10 vé siêu tốc" },
@@ -1401,18 +1422,57 @@
             var tbody = document.getElementById('adminUsersTbody');
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu thành viên...</td></tr>';
 
-            var users = null;
-            try {
-                var res = await fetch('/api/admin/users');
-                if (res.ok) users = await res.json();
-            } catch (err) {}
+            var ldb = await getLiveDatabase();
+            var usersMap = new Map();
 
-            if (!users || users.length === 0) {
-                var ldb = await getLiveDatabase();
-                users = ldb.users || [];
+            // 1. Thêm users từ ldb (Live Database)
+            if (ldb && ldb.users && Array.isArray(ldb.users)) {
+                ldb.users.forEach(function(u) {
+                    if (u && u.username) usersMap.set(u.username.toLowerCase(), u);
+                });
             }
 
-            renderUsersList(users, tbody);
+            // 2. Thêm users từ API /api/admin/users
+            try {
+                var res = await fetch('/api/admin/users');
+                if (res.ok) {
+                    var apiUsers = await res.json();
+                    if (Array.isArray(apiUsers)) {
+                        apiUsers.forEach(function(u) {
+                            if (u && u.username) {
+                                var key = u.username.toLowerCase();
+                                var exist = usersMap.get(key);
+                                usersMap.set(key, Object.assign({}, exist || {}, u));
+                            }
+                        });
+                    }
+                }
+            } catch (err) {}
+
+            // 3. Thêm users từ registered_users (người dùng vừa đăng ký trên web)
+            try {
+                var extra = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                if (Array.isArray(extra)) {
+                    extra.forEach(function(u) {
+                        if (u && u.username) {
+                            var key = u.username.toLowerCase();
+                            var exist = usersMap.get(key);
+                            usersMap.set(key, Object.assign({}, exist || {}, u));
+                        }
+                    });
+                }
+            } catch (err) {}
+
+            var combinedUsers = Array.from(usersMap.values());
+
+            // Lưu ngược lại vào liveDatabase để đồng bộ khắp toàn bộ Admin & SQL Export
+            if (ldb) {
+                ldb.users = combinedUsers;
+                saveLiveDatabase(ldb);
+            }
+
+            renderUsersList(combinedUsers, tbody);
+            updateDatabaseViewer();
         }
 
         function renderUsersList(users, tbody) {
