@@ -1,24 +1,43 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load initial database
+let sqlHelper = null;
+try {
+  sqlHelper = require('./sql-db.js');
+} catch (e) {
+  try {
+    sqlHelper = require('../sql-db.js');
+  } catch (err) {
+    console.error('Failed to load sql-db.js:', err);
+  }
+}
+
+// Load initial database directly from database.sql
 let db = null;
 function getDatabase() {
   if (db) return db;
-  try {
-    db = require('./database.json');
-    return db;
-  } catch (e) {
+
+  const locations = [
+    path.join(__dirname, 'database.sql'),
+    path.join(process.cwd(), 'database.sql'),
+    path.join(__dirname, '../database.sql'),
+    path.join(process.cwd(), 'public', 'database.sql')
+  ];
+
+  for (const loc of locations) {
     try {
-      const p = path.join(process.cwd(), 'database.json');
-      if (fs.existsSync(p)) {
-        db = JSON.parse(fs.readFileSync(p, 'utf8'));
-        return db;
+      if (fs.existsSync(loc) && sqlHelper && sqlHelper.parseSql) {
+        const rawSql = fs.readFileSync(loc, 'utf8');
+        db = sqlHelper.parseSql(rawSql);
+        if (db && db.users && db.users.length > 0) {
+          return db;
+        }
       }
-    } catch (err) {
-      console.error('Error reading database.json:', err);
+    } catch (e) {
+      console.error('Error reading SQL from', loc, e);
     }
   }
+
   db = {
     users: [
       { id: 1, username: 'admin', password: 'admin123', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287' },
@@ -47,6 +66,26 @@ function getDatabase() {
     }
   };
   return db;
+}
+
+function saveDatabase(updatedDb) {
+  if (!updatedDb || !sqlHelper || !sqlHelper.serializeToSql) return;
+  try {
+    const sqlText = sqlHelper.serializeToSql(updatedDb);
+    const locations = [
+      path.join(__dirname, 'database.sql'),
+      path.join(process.cwd(), 'database.sql'),
+      path.join(__dirname, '../database.sql'),
+      path.join(process.cwd(), 'public', 'database.sql')
+    ];
+    for (const loc of locations) {
+      try {
+        fs.writeFileSync(loc, sqlText, 'utf8');
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.error('Error saving to database.sql:', err);
+  }
 }
 
 module.exports = async (req, res) => {
@@ -97,6 +136,7 @@ module.exports = async (req, res) => {
       isActive: true
     };
     currentDb.packages.push(newPkg);
+    saveDatabase(currentDb);
     return res.status(200).json({ success: true, message: 'Đã thêm gói sự kiện mới!', package: newPkg });
   }
 
@@ -104,6 +144,7 @@ module.exports = async (req, res) => {
     const idx = currentDb.packages.findIndex(p => p.id === body.id);
     if (idx !== -1) {
       currentDb.packages[idx] = Object.assign(currentDb.packages[idx], body);
+      saveDatabase(currentDb);
       return res.status(200).json({ success: true, message: 'Đã cập nhật gói thành công!', package: currentDb.packages[idx] });
     }
     return res.status(404).json({ success: false, message: 'Không tìm thấy gói!' });
@@ -111,6 +152,7 @@ module.exports = async (req, res) => {
 
   if (pathname === '/packages/delete') {
     currentDb.packages = currentDb.packages.filter(p => p.id !== body.id);
+    saveDatabase(currentDb);
     return res.status(200).json({ success: true, message: 'Đã xóa gói sự kiện!' });
   }
 
@@ -164,6 +206,7 @@ module.exports = async (req, res) => {
     };
     if (!currentDb.transactions) currentDb.transactions = [];
     currentDb.transactions.unshift(newTx);
+    saveDatabase(currentDb);
 
     return res.status(200).json({
       success: true,
@@ -222,6 +265,8 @@ module.exports = async (req, res) => {
       currentDb.orders.unshift(pkgOrder);
     }
 
+    saveDatabase(currentDb);
+
     return res.status(200).json({
       success: true,
       message: 'Xác nhận nạp tiền thành công!',
@@ -275,6 +320,7 @@ module.exports = async (req, res) => {
     };
     if (!currentDb.transactions) currentDb.transactions = [];
     currentDb.transactions.unshift(newTx);
+    saveDatabase(currentDb);
 
     return res.status(200).json({
       success: true,
@@ -311,6 +357,7 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       currentDb.settings = Object.assign(currentDb.settings || {}, body);
+      saveDatabase(currentDb);
       return res.status(200).json({ success: true, message: 'Đã lưu cấu hình thành công!', settings: currentDb.settings });
     }
   }
@@ -361,6 +408,7 @@ module.exports = async (req, res) => {
       if (body.status === 'COMPLETED') {
         order.completedCount = order.totalCount;
       }
+      saveDatabase(currentDb);
       return res.status(200).json({ success: true, message: `Đã chuyển đơn hàng #${body.id} sang: ${body.status}` });
     }
     return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng!' });
@@ -375,6 +423,7 @@ module.exports = async (req, res) => {
     const user = (currentDb.users || []).find(u => u.username.toLowerCase() === (body.username || '').toLowerCase());
     if (user) {
       user.balance = (user.balance || 0) + (parseInt(body.amount) || 0);
+      saveDatabase(currentDb);
       return res.status(200).json({ success: true, message: `Số dư của ${user.username} hiện là: ${user.balance.toLocaleString('vi-VN')} đ`, newBalance: user.balance });
     }
     return res.status(404).json({ success: false, message: 'Không tìm thấy thành viên!' });
@@ -456,18 +505,25 @@ module.exports = async (req, res) => {
       createdAt: new Date().toLocaleDateString('vi-VN')
     };
     currentDb.users.push(newUser);
+    saveDatabase(currentDb);
     return res.status(200).json({ success: true, message: 'Đăng ký tài khoản thành công!', user: newUser });
   }
 
-  // 8. /database (Export entire database)
-  if (pathname === '/database') {
+  // 8. /database & /database.sql
+  if (pathname === '/database' || pathname === '/database.sql') {
     if (req.method === 'GET') {
+      if (pathname === '/database.sql') {
+        const sqlText = sqlHelper && sqlHelper.serializeToSql ? sqlHelper.serializeToSql(currentDb) : '';
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        return res.status(200).send(sqlText);
+      }
       return res.status(200).json(currentDb);
     }
     if (req.method === 'POST') {
       if (body && (body.users || body.packages || body.settings)) {
         db = body;
-        return res.status(200).json({ success: true, message: 'Đã nhập cơ sở dữ liệu mới thành công!' });
+        saveDatabase(db);
+        return res.status(200).json({ success: true, message: 'Đã lưu cấu trúc và dữ liệu mới trực tiếp vào database.sql!' });
       }
     }
   }

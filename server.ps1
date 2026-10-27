@@ -7,43 +7,483 @@ Add-Type -AssemblyName System.Web -ErrorAction SilentlyContinue
 $port = 8080
 $prefix = "http://localhost:$port/"
 $webRoot = Join-Path $PSScriptRoot "src\main\resources\META-INF\resources"
-$dbFile = Join-Path $PSScriptRoot "database.json"
+$sqlFile = Join-Path $PSScriptRoot "database.sql"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " KHỞI ĐỘNG HỆ THỐNG CHUNG SỨC TỰ ĐỘNG SERVER (Port $port)..." -ForegroundColor Green
 Write-Host " Thư mục Web Root: $webRoot" -ForegroundColor Yellow
-Write-Host " File Cơ Sở Dữ Liệu: $dbFile" -ForegroundColor Yellow
+Write-Host " File Cơ Sở Dữ Liệu Gốc: $sqlFile" -ForegroundColor Yellow
 Write-Host " Đường dẫn truy cập: $prefix" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# Load DB helper
+function Parse-SqlValuesClause([string]$valStr) {
+    $rows = [System.Collections.Generic.List[object]]::new()
+    $currentRow = [System.Collections.Generic.List[object]]::new()
+    $currVal = [System.Text.StringBuilder]::new()
+    $inStr = $false
+    $strChar = [char]0
+    $depth = 0
+
+    for ($i = 0; $i -lt $valStr.Length; $i++) {
+        $ch = $valStr[$i]
+
+        if ($inStr) {
+            if ($ch -eq $strChar) {
+                if ($i + 1 -lt $valStr.Length -and $valStr[$i + 1] -eq $strChar) {
+                    $currVal.Append($strChar) | Out-Null
+                    $i++
+                } else {
+                    $inStr = $false
+                }
+            } else {
+                $currVal.Append($ch) | Out-Null
+            }
+            continue
+        }
+
+        if ($ch -eq "'" -or $ch -eq '"') {
+            $inStr = $true
+            $strChar = $ch
+            continue
+        }
+
+        if ($ch -eq '(') {
+            if ($depth -eq 0) {
+                $currentRow = [System.Collections.Generic.List[object]]::new()
+                $currVal.Clear() | Out-Null
+            } else {
+                $currVal.Append($ch) | Out-Null
+            }
+            $depth++
+        }
+        elseif ($ch -eq ')') {
+            $depth--
+            if ($depth -eq 0) {
+                $v = $currVal.ToString().Trim()
+                if ($v -eq "NULL") { $val = $null }
+                elseif ($v -eq "NOW()") { $val = (Get-Date).ToString("dd/MM/yyyy HH:mm:ss") }
+                elseif ([long]::TryParse($v, [ref]0)) { $val = [long]$v }
+                else { $val = $v }
+                $currentRow.Add($val)
+                $rows.Add($currentRow.ToArray())
+                $currVal.Clear() | Out-Null
+            } else {
+                $currVal.Append($ch) | Out-Null
+            }
+        }
+        elseif ($ch -eq ',' -and $depth -eq 1) {
+            $v = $currVal.ToString().Trim()
+            if ($v -eq "NULL") { $val = $null }
+            elseif ($v -eq "NOW()") { $val = (Get-Date).ToString("dd/MM/yyyy HH:mm:ss") }
+            elseif ([long]::TryParse($v, [ref]0)) { $val = [long]$v }
+            else { $val = $v }
+            $currentRow.Add($val)
+            $currVal.Clear() | Out-Null
+        }
+        elseif ($depth -gt 0) {
+            $currVal.Append($ch) | Out-Null
+        }
+    }
+    return $rows
+}
+
+function Read-SqlDatabase([string]$filePath) {
+    if (-not (Test-Path $filePath)) { return $null }
+    $sql = Get-Content -Path $filePath -Raw -Encoding UTF8
+
+    $db = [PSCustomObject]@{
+        users = [System.Collections.ArrayList]::new()
+        packages = [System.Collections.ArrayList]::new()
+        orders = [System.Collections.ArrayList]::new()
+        transactions = [System.Collections.ArrayList]::new()
+        settings = [PSCustomObject]@{
+            siteName = "Chung sức Trí Đức"
+            adminPhone = "0372.852.287"
+            adminZalo = "https://zalo.me/triduc1903"
+            ticketPrice = 500
+            bankName = "MB Bank"
+            bankAccount = "01111111111100"
+            bankOwner = "NGUYEN TRI DUC"
+        }
+    }
+
+    # 1. Users
+    if ($sql -match 'INSERT\s+INTO\s+[`]?users[`]?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);') {
+        $uRows = Parse-SqlValuesClause $Matches[1]
+        foreach ($r in $uRows) {
+            $db.users.Add([PSCustomObject]@{
+                id = $r[0]
+                username = [string]$r[1]
+                password = [string]$r[2]
+                role = [string]$r[3]
+                balance = [long]$r[4]
+                phone = [string]$r[5]
+                email = [string]$r[6]
+                status = [string]$r[7]
+                createdAt = [string]$r[8]
+            }) | Out-Null
+        }
+    }
+
+    # 2. Packages
+    if ($sql -match 'INSERT\s+INTO\s+[`]?event_packages[`]?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);') {
+        $pRows = Parse-SqlValuesClause $Matches[1]
+        foreach ($r in $pRows) {
+            $db.packages.Add([PSCustomObject]@{
+                id = [string]$r[1]
+                code = [string]$r[1]
+                title = [string]$r[2]
+                ticketCount = [int]$r[3]
+                price = [long]$r[4]
+                originalPrice = if ($r[5]) { [long]$r[5] } else { [long]($r[4] * 1.2) }
+                badge = [string]$r[6]
+                description = [string]$r[7]
+                imageUrl = [string]$r[8]
+                isActive = ($r[9] -eq 1 -or $r[9] -eq $true)
+            }) | Out-Null
+        }
+    }
+
+    # 3. Settings
+    if ($sql -match 'INSERT\s+INTO\s+[`]?system_settings[`]?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);') {
+        $sRows = Parse-SqlValuesClause $Matches[1]
+        foreach ($r in $sRows) {
+            $k = [string]$r[0]
+            $v = [string]$r[1]
+            if ($k -eq 'ADMIN_HOTLINE') { $db.settings.adminPhone = $v }
+            if ($k -eq 'ADMIN_ZALO') { $db.settings.adminZalo = $v }
+            if ($k -eq 'DEFAULT_TICKET_PRICE') { $db.settings.ticketPrice = [int]$v }
+            if ($k -eq 'BANK_NAME') { $db.settings.bankName = $v }
+            if ($k -eq 'BANK_ACCOUNT_NUMBER') { $db.settings.bankAccount = $v }
+            if ($k -eq 'BANK_ACCOUNT_NAME') { $db.settings.bankOwner = $v }
+        }
+    }
+
+    # 4. Orders
+    if ($sql -match 'INSERT\s+INTO\s+[`]?orders[`]?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);') {
+        $oRows = Parse-SqlValuesClause $Matches[1]
+        foreach ($r in $oRows) {
+            $db.orders.Add([PSCustomObject]@{
+                id = [string]$r[1]
+                orderCode = [string]$r[1]
+                customerName = [string]$r[3]
+                code = [string]$r[4]
+                packageId = [string]$r[5]
+                packageTitle = [string]$r[6]
+                ticketCount = [int]$r[7]
+                totalCount = [int]$r[7]
+                unitPrice = [long]$r[8]
+                price = [long]$r[9]
+                speed = [string]$r[10]
+                completedCount = [int]$r[11]
+                status = [string]$r[12]
+                createdAt = [string]$r[13]
+            }) | Out-Null
+        }
+    }
+
+    # 5. Transactions
+    if ($sql -match 'INSERT\s+INTO\s+[`]?transactions[`]?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);') {
+        $tRows = Parse-SqlValuesClause $Matches[1]
+        foreach ($r in $tRows) {
+            $db.transactions.Add([PSCustomObject]@{
+                id = [string]$r[1]
+                transCode = [string]$r[1]
+                username = [string]$r[2]
+                type = [string]$r[3]
+                amount = [long]$r[4]
+                method = [string]$r[5]
+                description = [string]$r[6]
+                status = [string]$r[7]
+                createdAt = [string]$r[8]
+            }) | Out-Null
+        }
+    }
+
+    return $db
+}
+
+function Escape-Sql([object]$val) {
+    if ($null -eq $val -or [string]::IsNullOrEmpty([string]$val)) { return "''" }
+    return "'" + ([string]$val).Replace("'", "''") + "'"
+}
+
+function Save-SqlDatabase($db, [string]$filePath) {
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $lines.Add('-- ==============================================================================')
+    $lines.Add('-- CƠ SỞ DỮ LIỆU MYSQL GỐC: HỆ THỐNG CHUNG SỨC TỰ ĐỘNG LIÊN QUÂN MOBILE')
+    $lines.Add('-- Tự động cập nhật trực tiếp vào lúc: ' + (Get-Date).ToString("dd/MM/yyyy HH:mm:ss"))
+    $lines.Add('-- ==============================================================================')
+    $lines.Add('')
+    $lines.Add('CREATE DATABASE IF NOT EXISTS `chungsuc_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
+    $lines.Add('USE `chungsuc_db`;')
+    $lines.Add('')
+    $lines.Add('DROP TABLE IF EXISTS `order_details`;')
+    $lines.Add('DROP TABLE IF EXISTS `orders`;')
+    $lines.Add('DROP TABLE IF EXISTS `transactions`;')
+    $lines.Add('DROP TABLE IF EXISTS `event_packages`;')
+    $lines.Add('DROP TABLE IF EXISTS `users`;')
+    $lines.Add('DROP TABLE IF EXISTS `system_settings`;')
+    $lines.Add('')
+    $lines.Add('-- 1. BẢNG NGƯỜI DÙNG (users)')
+    $lines.Add('CREATE TABLE `users` (')
+    $lines.Add('  `id` INT AUTO_INCREMENT PRIMARY KEY,')
+    $lines.Add('  `username` VARCHAR(64) NOT NULL UNIQUE,')
+    $lines.Add('  `password` VARCHAR(255) NOT NULL,')
+    $lines.Add("  `role` ENUM('ROLE_ADMIN', 'ROLE_USER') NOT NULL DEFAULT 'ROLE_USER',")
+    $lines.Add('  `balance` BIGINT NOT NULL DEFAULT 0,')
+    $lines.Add('  `phone` VARCHAR(20) NOT NULL,')
+    $lines.Add('  `email` VARCHAR(255) NULL,')
+    $lines.Add("  `status` ENUM('ACTIVE', 'BANNED') NOT NULL DEFAULT 'ACTIVE',")
+    $lines.Add('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,')
+    $lines.Add('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,')
+    $lines.Add('  INDEX `idx_users_role` (`role`),')
+    $lines.Add('  INDEX `idx_users_status` (`status`)')
+    $lines.Add(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;')
+    $lines.Add('')
+    $lines.Add('-- 2. BẢNG GÓI SỰ KIỆN (event_packages)')
+    $lines.Add('CREATE TABLE `event_packages` (')
+    $lines.Add('  `id` INT AUTO_INCREMENT PRIMARY KEY,')
+    $lines.Add('  `package_code` VARCHAR(50) NOT NULL UNIQUE,')
+    $lines.Add("  `title` VARCHAR(255) NOT NULL COMMENT 'Tên gói sự kiện',")
+    $lines.Add("  `ticket_count` INT NOT NULL DEFAULT 10 COMMENT 'Số vé / lượt chạy',")
+    $lines.Add("  `price` BIGINT NOT NULL DEFAULT 5000 COMMENT 'Giá thanh toán (VNĐ)',")
+    $lines.Add("  `original_price` BIGINT NULL COMMENT 'Giá gốc trước khi giảm',")
+    $lines.Add("  `badge` VARCHAR(50) NULL DEFAULT 'HOT',")
+    $lines.Add('  `description` TEXT NULL,')
+    $lines.Add('  `image_url` LONGTEXT NULL,')
+    $lines.Add('  `is_active` TINYINT(1) NOT NULL DEFAULT 1,')
+    $lines.Add('  `display_order` INT NOT NULL DEFAULT 0,')
+    $lines.Add('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,')
+    $lines.Add('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,')
+    $lines.Add('  INDEX `idx_packages_active` (`is_active`),')
+    $lines.Add('  INDEX `idx_packages_order` (`display_order`)')
+    $lines.Add(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;')
+    $lines.Add('')
+    $lines.Add('-- 3. BẢNG ĐƠN HÀNG (orders)')
+    $lines.Add('CREATE TABLE `orders` (')
+    $lines.Add('  `id` INT AUTO_INCREMENT PRIMARY KEY,')
+    $lines.Add('  `order_code` VARCHAR(50) NOT NULL UNIQUE,')
+    $lines.Add('  `user_id` INT NULL,')
+    $lines.Add('  `customer_name` VARCHAR(150) NOT NULL,')
+    $lines.Add('  `event_code` VARCHAR(255) NOT NULL,')
+    $lines.Add('  `package_id` VARCHAR(50) NULL,')
+    $lines.Add('  `package_title` VARCHAR(255) NULL,')
+    $lines.Add('  `ticket_count` INT NOT NULL DEFAULT 10,')
+    $lines.Add('  `unit_price` BIGINT NOT NULL DEFAULT 500,')
+    $lines.Add('  `total_price` BIGINT NOT NULL DEFAULT 5000,')
+    $lines.Add("  `speed` ENUM('VIP', 'STANDARD') NOT NULL DEFAULT 'VIP',")
+    $lines.Add('  `completed_count` INT NOT NULL DEFAULT 0,')
+    $lines.Add("  `status` ENUM('PENDING', 'RUNNING', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'RUNNING',")
+    $lines.Add('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP')
+    $lines.Add(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;')
+    $lines.Add('')
+    $lines.Add('-- 4. BẢNG GIAO DỊCH (transactions)')
+    $lines.Add('CREATE TABLE `transactions` (')
+    $lines.Add('  `id` INT AUTO_INCREMENT PRIMARY KEY,')
+    $lines.Add('  `trans_code` VARCHAR(50) NOT NULL UNIQUE,')
+    $lines.Add('  `username` VARCHAR(64) NOT NULL,')
+    $lines.Add('  `type` VARCHAR(20) NOT NULL,')
+    $lines.Add('  `amount` BIGINT NOT NULL,')
+    $lines.Add("  `method` VARCHAR(50) NOT NULL DEFAULT 'VietQR',")
+    $lines.Add('  `description` VARCHAR(255) NOT NULL,')
+    $lines.Add("  `status` VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',")
+    $lines.Add('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP')
+    $lines.Add(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;')
+    $lines.Add('')
+    $lines.Add('-- 5. BẢNG CẤU HÌNH HỆ THỐNG (system_settings)')
+    $lines.Add('CREATE TABLE `system_settings` (')
+    $lines.Add('  `id` INT AUTO_INCREMENT PRIMARY KEY,')
+    $lines.Add('  `setting_key` VARCHAR(100) NOT NULL UNIQUE,')
+    $lines.Add('  `setting_value` TEXT NOT NULL,')
+    $lines.Add('  `description` VARCHAR(255) NULL,')
+    $lines.Add('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    $lines.Add(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;')
+    $lines.Add('')
+    $lines.Add('-- ==============================================================================')
+    $lines.Add('-- DỮ LIỆU HIỆN HÀNH (LIVE SEED DATA TRỰC TIẾP TỪ DATABASE.SQL)')
+    $lines.Add('-- ==============================================================================')
+    $lines.Add('')
+
+    # 1. Users
+    if ($db.users -and $db.users.Count -gt 0) {
+        $lines.Add('-- 1. DỮ LIỆU NGƯỜI DÙNG')
+        $uRows = [System.Collections.Generic.List[string]]::new()
+        for ($i = 0; $i -lt $db.users.Count; $i++) {
+            $u = $db.users[$i]
+            $uId = $i + 1
+            $uName = Escape-Sql $u.username
+            $passVal = if ($u.password) { $u.password } else { "password123456" }
+            $uPass = Escape-Sql $passVal
+            $roleVal = if ($u.role) { $u.role } else { "ROLE_USER" }
+            $uRole = Escape-Sql $roleVal
+            $uBal = if ($u.balance) { [long]$u.balance } else { 0 }
+            $phoneVal = if ($u.phone) { $u.phone } else { "0372.852.287" }
+            $uPhone = Escape-Sql $phoneVal
+            $emailVal = if ($u.email) { $u.email } else { "$($u.username)@shopchungsuc.com" }
+            $uEmail = Escape-Sql $emailVal
+            $uRows.Add("($uId, $uName, $uPass, $uRole, $uBal, $uPhone, $uEmail, 'ACTIVE', NOW())")
+        }
+        $lines.Add('INSERT INTO `users` (`id`, `username`, `password`, `role`, `balance`, `phone`, `email`, `status`, `created_at`) VALUES')
+        $lines.Add(($uRows -join ",`n") + ';')
+        $lines.Add('')
+    }
+
+    # 2. Packages
+    if ($db.packages -and $db.packages.Count -gt 0) {
+        $lines.Add('-- 2. DỮ LIỆU GÓI SỰ KIỆN')
+        $pRows = [System.Collections.Generic.List[string]]::new()
+        for ($i = 0; $i -lt $db.packages.Count; $i++) {
+            $p = $db.packages[$i]
+            $pkgIdx = $i + 1
+            $codeVal = if ($p.id) { $p.id } elseif ($p.code) { $p.code } else { "PKG_$($i+1)" }
+            $code = Escape-Sql $codeVal
+            $title = Escape-Sql $p.title
+            $tc = if ($p.ticketCount) { [int]$p.ticketCount } else { 10 }
+            $pr = if ($p.price) { [long]$p.price } else { 5000 }
+            $orig = if ($p.originalPrice) { [long]$p.originalPrice } else { [long]($pr * 1.2) }
+            $badgeVal = if ($p.badge) { $p.badge } else { "" }
+            $badge = Escape-Sql $badgeVal
+            $descVal = if ($p.description) { $p.description } else { "" }
+            $desc = Escape-Sql $descVal
+            $imgVal = if ($p.imageUrl) { $p.imageUrl } else { "uploads/logo.png" }
+            $img = Escape-Sql $imgVal
+            $act = if ($p.isActive) { 1 } else { 0 }
+            $pRows.Add("($pkgIdx, $code, $title, $tc, $pr, $orig, $badge, $desc, $img, $act, $pkgIdx)")
+        }
+        $lines.Add('INSERT INTO `event_packages` (`id`, `package_code`, `title`, `ticket_count`, `price`, `original_price`, `badge`, `description`, `image_url`, `is_active`, `display_order`) VALUES')
+        $lines.Add(($pRows -join ",`n") + ';')
+        $lines.Add('')
+    }
+
+    # 3. Settings
+    $lines.Add('-- 3. CẤU HÌNH HỆ THỐNG')
+    $st = $db.settings
+    $stPhone = if ($st -and $st.adminPhone) { $st.adminPhone } else { "0372.852.287" }
+    $stHotline = Escape-Sql $stPhone
+    $stZVal = if ($st -and $st.adminZalo) { $st.adminZalo } else { "https://zalo.me/triduc1903" }
+    $stZalo = Escape-Sql $stZVal
+    $stPVal = if ($st -and $st.ticketPrice) { [string]$st.ticketPrice } else { "500" }
+    $stPrice = Escape-Sql $stPVal
+    $stBNVal = if ($st -and $st.bankName) { $st.bankName } else { "MB Bank" }
+    $stBName = Escape-Sql $stBNVal
+    $stBAVal = if ($st -and $st.bankAccount) { $st.bankAccount } else { "01111111111100" }
+    $stBAcc = Escape-Sql $stBAVal
+    $stBOVal = if ($st -and $st.bankOwner) { $st.bankOwner } else { "NGUYEN TRI DUC" }
+    $stBOwner = Escape-Sql $stBOVal
+
+    $sRows = @(
+        "('ADMIN_HOTLINE', $stHotline, 'Số điện thoại hỗ trợ admin')",
+        "('ADMIN_ZALO', $stZalo, 'Đường link Zalo hỗ trợ khách hàng')",
+        "('DEFAULT_TICKET_PRICE', $stPrice, 'Đơn giá mỗi vé chạy mã (VNĐ)')",
+        "('BANK_NAME', $stBName, 'Tên ngân hàng nhận chuyển khoản')",
+        "('BANK_ACCOUNT_NUMBER', $stBAcc, 'Số tài khoản ngân hàng')",
+        "('BANK_ACCOUNT_NAME', $stBOwner, 'Tên chủ tài khoản ngân hàng')"
+    )
+    $lines.Add('INSERT INTO `system_settings` (`setting_key`, `setting_value`, `description`) VALUES')
+    $lines.Add(($sRows -join ",`n") + ';')
+    $lines.Add('')
+
+    # 4. Orders
+    if ($db.orders -and $db.orders.Count -gt 0) {
+        $lines.Add('-- 4. DỮ LIỆU ĐƠN HÀNG')
+        $oRows = [System.Collections.Generic.List[string]]::new()
+        for ($i = 0; $i -lt $db.orders.Count; $i++) {
+            $o = $db.orders[$i]
+            $oId = $i + 1
+            $codeVal = if ($o.id) { $o.id } elseif ($o.orderCode) { $o.orderCode } else { "CS$($i+10000)" }
+            $code = Escape-Sql $codeVal
+            $cVal = if ($o.customerName) { $o.customerName } elseif ($o.username) { $o.username } else { "Khách" }
+            $cName = Escape-Sql $cVal
+            $eVal = if ($o.code) { $o.code } elseif ($o.eventCode) { $o.eventCode } else { "AOV-VIP" }
+            $eCode = Escape-Sql $eVal
+            $pkgVal = if ($o.packageId) { $o.packageId } else { "PKG_10" }
+            $pkgIdentifier = Escape-Sql $pkgVal
+            $pkgTVal = if ($o.packageTitle) { $o.packageTitle } else { "Gói Sự Kiện" }
+            $pTitle = Escape-Sql $pkgTVal
+            $tc = if ($o.ticketCount) { [int]$o.ticketCount } elseif ($o.totalCount) { [int]$o.totalCount } else { 10 }
+            $uPr = if ($o.unitPrice) { [long]$o.unitPrice } else { 500 }
+            $tPr = if ($o.price) { [long]$o.price } else { 5000 }
+            $speedVal = if ($o.speed) { $o.speed } else { "VIP" }
+            $speed = Escape-Sql $speedVal
+            $comp = if ($o.completedCount) { [int]$o.completedCount } else { 0 }
+            $statVal = if ($o.status) { $o.status } else { "RUNNING" }
+            $stat = Escape-Sql $statVal
+            $oRows.Add("($oId, $code, 3, $cName, $eCode, $pkgIdentifier, $pTitle, $tc, $uPr, $tPr, $speed, $comp, $stat, NOW())")
+        }
+        $lines.Add('INSERT INTO `orders` (`id`, `order_code`, `user_id`, `customer_name`, `event_code`, `package_id`, `package_title`, `ticket_count`, `unit_price`, `total_price`, `speed`, `completed_count`, `status`, `created_at`) VALUES')
+        $lines.Add(($oRows -join ",`n") + ';')
+        $lines.Add('')
+    }
+
+    # 5. Transactions
+    if ($db.transactions -and $db.transactions.Count -gt 0) {
+        $lines.Add('-- 5. DỮ LIỆU LỊCH SỬ GIAO DỊCH')
+        $tRows = [System.Collections.Generic.List[string]]::new()
+        for ($i = 0; $i -lt $db.transactions.Count; $i++) {
+            $t = $db.transactions[$i]
+            $tId = $i + 1
+            $codeVal = if ($t.id) { $t.id } elseif ($t.transCode) { $t.transCode } else { "GD$($i+1000)" }
+            $code = Escape-Sql $codeVal
+            $uVal = if ($t.username) { $t.username } else { "demo" }
+            $uName = Escape-Sql $uVal
+            $typeVal = if ($t.type) { $t.type } else { "deposit" }
+            $type = Escape-Sql $typeVal
+            $amt = if ($t.amount) { [long]$t.amount } else { 0 }
+            $methVal = if ($t.method) { $t.method } else { "VietQR MBBank" }
+            $meth = Escape-Sql $methVal
+            $descVal = if ($t.description) { $t.description } else { "Giao dịch" }
+            $desc = Escape-Sql $descVal
+            $statVal = if ($t.status) { $t.status } else { "SUCCESS" }
+            $stat = Escape-Sql $statVal
+            $tRows.Add("($tId, $code, $uName, $type, $amt, $meth, $desc, $stat, NOW())")
+        }
+        $lines.Add('INSERT INTO `transactions` (`id`, `trans_code`, `username`, `type`, `amount`, `method`, `description`, `status`, `created_at`) VALUES')
+        $lines.Add(($tRows -join ",`n") + ';')
+        $lines.Add('')
+    }
+
+    $allContent = $lines -join "`n"
+    [System.IO.File]::WriteAllText($filePath, $allContent, [System.Text.Encoding]::UTF8)
+}
+
+# Load DB helper: ĐỌC TRỰC TIẾP TỪ DATABASE.SQL
 function Get-Database {
-    if (Test-Path $dbFile) {
-        $raw = Get-Content -Path $dbFile -Raw -Encoding UTF8
-        return ConvertFrom-Json $raw
+    if (Test-Path $sqlFile) {
+        return Read-SqlDatabase $sqlFile
     }
     return [PSCustomObject]@{
-        users = @()
-        packages = @()
-        orders = @()
-        transactions = @()
-        settings = @{}
+        users = [System.Collections.ArrayList]::new()
+        packages = [System.Collections.ArrayList]::new()
+        orders = [System.Collections.ArrayList]::new()
+        transactions = [System.Collections.ArrayList]::new()
+        settings = [PSCustomObject]@{
+            siteName = "Chung sức Trí Đức"
+            adminPhone = "0372.852.287"
+            adminZalo = "https://zalo.me/triduc1903"
+            ticketPrice = 500
+            bankName = "MB Bank"
+            bankAccount = "01111111111100"
+            bankOwner = "NGUYEN TRI DUC"
+        }
     }
 }
 
-# Save DB helper (Đồng thời ghi trực tiếp vào cả database.json và database.sql)
+# Save DB helper: GHI TRỰC TIẾP VÀO DATABASE.SQL
 function Save-Database($db) {
-    $json = ConvertTo-Json -InputObject $db -Depth 10
-    Set-Content -Path $dbFile -Value $json -Encoding UTF8
+    Save-SqlDatabase $db $sqlFile
 
+    # Đồng bộ sang các thư mục public và META-INF
+    $pubSql = Join-Path $PSScriptRoot "public\database.sql"
+    $metaSql = Join-Path $PSScriptRoot "src\main\resources\META-INF\resources\database.sql"
     try {
-        $syncScript = Join-Path $PSScriptRoot "sync-db.ps1"
-        if (Test-Path $syncScript) {
-            & $syncScript
+        if (Test-Path (Split-Path $pubSql)) {
+            [System.IO.File]::Copy($sqlFile, $pubSql, $true)
         }
-    } catch {
-        Write-Host "[WARN] Không thể tự động ghi database.sql: $_" -ForegroundColor Yellow
-    }
+        if (Test-Path (Split-Path $metaSql)) {
+            [System.IO.File]::Copy($sqlFile, $metaSql, $true)
+        }
+    } catch {}
 }
 
 # Initialize HttpListener

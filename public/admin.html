@@ -825,59 +825,228 @@
         var liveDatabase = null;
 
         // =====================================================================
-        // CORE LIVE DATABASE ENGINE (ĐỒNG BỘ database.json & LOCALSTORAGE TRÊN VERCEL)
+        // CORE LIVE DATABASE ENGINE (ĐỌC & GHI TRỰC TIẾP TỪ DATABASE.SQL)
         // =====================================================================
+        function parseSqlValues(valuesClause) {
+            var rows = [];
+            var inString = false;
+            var stringChar = '';
+            var currentVal = '';
+            var currentRow = [];
+            var parenDepth = 0;
+
+            for (var i = 0; i < valuesClause.length; i++) {
+                var ch = valuesClause[i];
+
+                if (inString) {
+                    if (ch === stringChar) {
+                        if (valuesClause[i + 1] === stringChar) {
+                            currentVal += stringChar;
+                            i++;
+                        } else {
+                            inString = false;
+                        }
+                    } else {
+                        currentVal += ch;
+                    }
+                    continue;
+                }
+
+                if (ch === "'" || ch === '"') {
+                    inString = true;
+                    stringChar = ch;
+                    continue;
+                }
+
+                if (ch === '(') {
+                    if (parenDepth === 0) {
+                        currentRow = [];
+                        currentVal = '';
+                    } else {
+                        currentVal += ch;
+                    }
+                    parenDepth++;
+                } else if (ch === ')') {
+                    parenDepth--;
+                    if (parenDepth === 0) {
+                        var v = currentVal.trim();
+                        if (v === 'NULL') v = null;
+                        else if (v === 'NOW()') v = new Date().toLocaleString('vi-VN');
+                        else if (!isNaN(v) && v !== '') v = Number(v);
+                        currentRow.push(v);
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentVal = '';
+                    } else {
+                        currentVal += ch;
+                    }
+                } else if (ch === ',' && parenDepth === 1) {
+                    var v2 = currentVal.trim();
+                    if (v2 === 'NULL') v2 = null;
+                    else if (v2 === 'NOW()') v2 = new Date().toLocaleString('vi-VN');
+                    else if (!isNaN(v2) && v2 !== '') v2 = Number(v2);
+                    currentRow.push(v2);
+                    currentVal = '';
+                } else if (parenDepth > 0) {
+                    currentVal += ch;
+                }
+            }
+            return rows;
+        }
+
+        function parseSqlToDatabase(sqlText) {
+            var db = {
+                users: [],
+                packages: [],
+                orders: [],
+                transactions: [],
+                settings: {
+                    siteName: "Chung sức Trí Đức",
+                    adminPhone: "0372.852.287",
+                    adminZalo: "https://zalo.me/triduc1903",
+                    ticketPrice: 500,
+                    bankName: "MB Bank",
+                    bankAccount: "01111111111100",
+                    bankOwner: "NGUYEN TRI DUC"
+                }
+            };
+
+            // 1. Users
+            var userMatch = sqlText.match(/INSERT\s+INTO\s+`?users`?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);/i);
+            if (userMatch) {
+                var rawRows = parseSqlValues(userMatch[1]);
+                db.users = rawRows.map(function(r) {
+                    return {
+                        id: r[0],
+                        username: r[1],
+                        password: r[2],
+                        role: r[3],
+                        balance: r[4] || 0,
+                        phone: r[5] || '0372.852.287',
+                        email: r[6] || (r[1] + '@shopchungsuc.com'),
+                        status: r[7] || 'ACTIVE',
+                        createdAt: r[8] || new Date().toLocaleString('vi-VN')
+                    };
+                });
+            }
+
+            // 2. Packages
+            var pkgMatch = sqlText.match(/INSERT\s+INTO\s+`?event_packages`?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);/i);
+            if (pkgMatch) {
+                var rawRows = parseSqlValues(pkgMatch[1]);
+                db.packages = rawRows.map(function(r) {
+                    return {
+                        id: r[1],
+                        code: r[1],
+                        title: r[2],
+                        ticketCount: r[3],
+                        price: r[4],
+                        originalPrice: r[5] || Math.round(r[4] * 1.2),
+                        badge: r[6] || '',
+                        description: r[7] || '',
+                        imageUrl: r[8] || 'uploads/logo.png',
+                        isActive: r[9] === 1 || r[9] === true
+                    };
+                });
+            }
+
+            // 3. Settings
+            var stMatch = sqlText.match(/INSERT\s+INTO\s+`?system_settings`?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);/i);
+            if (stMatch) {
+                var rawRows = parseSqlValues(stMatch[1]);
+                rawRows.forEach(function(r) {
+                    var key = r[0];
+                    var val = r[1];
+                    if (key === 'ADMIN_HOTLINE') db.settings.adminPhone = val;
+                    if (key === 'ADMIN_ZALO') db.settings.adminZalo = val;
+                    if (key === 'DEFAULT_TICKET_PRICE') db.settings.ticketPrice = Number(val) || 500;
+                    if (key === 'BANK_NAME') db.settings.bankName = val;
+                    if (key === 'BANK_ACCOUNT_NUMBER') db.settings.bankAccount = val;
+                    if (key === 'BANK_ACCOUNT_NAME') db.settings.bankOwner = val;
+                });
+            }
+
+            // 4. Orders
+            var ordMatch = sqlText.match(/INSERT\s+INTO\s+`?orders`?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);/i);
+            if (ordMatch) {
+                var rawRows = parseSqlValues(ordMatch[1]);
+                db.orders = rawRows.map(function(r) {
+                    return {
+                        id: r[1],
+                        orderCode: r[1],
+                        customerName: r[3],
+                        code: r[4],
+                        packageId: r[5],
+                        packageTitle: r[6],
+                        ticketCount: r[7],
+                        totalCount: r[7],
+                        unitPrice: r[8],
+                        price: r[9],
+                        speed: r[10] || 'VIP',
+                        completedCount: r[11] || 0,
+                        status: r[12] || 'RUNNING',
+                        createdAt: r[13] || new Date().toLocaleString('vi-VN')
+                    };
+                });
+            }
+
+            // 5. Transactions
+            var txMatch = sqlText.match(/INSERT\s+INTO\s+`?transactions`?\s*(?:\([^\)]*\))?\s*VALUES\s*([\s\S]*?);/i);
+            if (txMatch) {
+                var rawRows = parseSqlValues(txMatch[1]);
+                db.transactions = rawRows.map(function(r) {
+                    return {
+                        id: r[1],
+                        username: r[2],
+                        type: r[3],
+                        amount: r[4],
+                        method: r[5],
+                        description: r[6],
+                        status: r[7] || 'SUCCESS',
+                        createdAt: r[8] || new Date().toLocaleString('vi-VN')
+                    };
+                });
+            }
+
+            return db;
+        }
+
         async function getLiveDatabase(forceRefresh) {
-            // Helper đồng bộ registered_users vào database object
-            function mergeRegisteredUsers(targetDb) {
-                if (!targetDb) return targetDb;
-                if (!targetDb.users) targetDb.users = [];
-                try {
-                    var extra = JSON.parse(localStorage.getItem('registered_users') || '[]');
-                    if (Array.isArray(extra)) {
-                        extra.forEach(function(eu) {
-                            if (eu && eu.username) {
-                                var exist = targetDb.users.find(function(u) { return u.username.toLowerCase() === eu.username.toLowerCase(); });
-                                if (!exist) {
-                                    targetDb.users.push(eu);
-                                }
-                            }
-                        });
-                    }
-                } catch(e) {}
-                return targetDb;
-            }
-
-            // 1. Luôn ưu tiên đọc từ localStorage để đồng bộ tức thì khi khách mua đơn hoặc tạo tài khoản
+            // 1. Đọc trực tiếp từ file database.sql gốc
             try {
-                var cached = localStorage.getItem('app_database');
-                if (cached) {
-                    var parsed = JSON.parse(cached);
-                    if (parsed && parsed.packages && parsed.packages.length > 0) {
-                        liveDatabase = mergeRegisteredUsers(parsed);
-                        return liveDatabase;
-                    }
+                var res = await fetch('database.sql?t=' + Date.now());
+                if (!res.ok) {
+                    res = await fetch('/api/database.sql?t=' + Date.now());
                 }
-            } catch(e) {}
-
-            if (!forceRefresh && liveDatabase && liveDatabase.packages && liveDatabase.packages.length > 0) {
-                return mergeRegisteredUsers(liveDatabase);
-            }
-
-            // 2. Tải trực tiếp từ file database.json trên hosting
-            try {
-                var res = await fetch('database.json?t=' + Date.now());
                 if (res.ok) {
-                    var data = await res.json();
-                    if (data && data.packages) {
-                        liveDatabase = mergeRegisteredUsers(data);
-                        try { localStorage.setItem('app_database', JSON.stringify(liveDatabase)); } catch(e){}
+                    var sqlText = await res.text();
+                    if (sqlText && sqlText.indexOf('CREATE TABLE') !== -1) {
+                        var parsed = parseSqlToDatabase(sqlText);
+                        if (parsed && parsed.users && parsed.users.length > 0) {
+                            liveDatabase = parsed;
+                            return liveDatabase;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Lỗi tải trực tiếp database.sql:', err);
+            }
+
+            // 2. Tải qua API /api/database
+            try {
+                var resApi = await fetch('/api/database?t=' + Date.now());
+                if (resApi.ok) {
+                    var data = await resApi.json();
+                    if (data && data.users) {
+                        liveDatabase = data;
                         return liveDatabase;
                     }
                 }
             } catch(e) {}
 
-            // 3. Dự phòng cấu trúc mặc định chuẩn
+            if (liveDatabase) return liveDatabase;
+
+            // 3. Fallback
             liveDatabase = {
                 users: [
                     { id: 1, username: 'admin', role: 'ROLE_ADMIN', balance: 1000000, phone: '0372.852.287', createdAt: '20/10/2026' },
@@ -921,10 +1090,12 @@
         function saveLiveDatabase(db) {
             liveDatabase = db;
             try {
-                localStorage.setItem('app_database', JSON.stringify(db));
-            } catch(e) {
-                console.error('Error saving app_database:', e);
-            }
+                fetch('/api/database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(db)
+                });
+            } catch(e) {}
         }
 
         // Check Admin Auth - Phân quyền tài khoản
@@ -1798,7 +1969,18 @@
             if (elT) elT.textContent = tCount;
 
             var viewer = document.getElementById('dbJsonViewer');
-            if (viewer) viewer.value = JSON.stringify(ldb, null, 4);
+            if (viewer) {
+                try {
+                    var resSql = await fetch('database.sql?t=' + Date.now());
+                    if (resSql.ok) {
+                        viewer.value = await resSql.text();
+                    } else {
+                        viewer.value = JSON.stringify(ldb, null, 4);
+                    }
+                } catch(e) {
+                    viewer.value = JSON.stringify(ldb, null, 4);
+                }
+            }
         }
 
         window.exportDatabaseSql = async function() {
@@ -2039,21 +2221,25 @@
 
         window.reloadDatabaseFromSource = async function() {
             try {
-                var res = await fetch('database.json?t=' + Date.now());
+                var res = await fetch('database.sql?t=' + Date.now());
+                if (!res.ok) {
+                    res = await fetch('/api/database.sql?t=' + Date.now());
+                }
                 if (res.ok) {
-                    var data = await res.json();
+                    var sqlText = await res.text();
+                    var data = parseSqlToDatabase(sqlText);
                     saveLiveDatabase(data);
                     Swal.fire({
                         icon: 'success',
                         title: 'Đã đồng bộ!',
-                        text: 'Đã tải bản cơ sở dữ liệu gốc mới nhất từ file database.json.'
+                        text: 'Đã tải bản cơ sở dữ liệu gốc mới nhất trực tiếp từ file database.sql.'
                     }).then(function() {
                         window.location.reload();
                     });
                     return;
                 }
             } catch(e) {}
-            Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối tải file database.json từ máy chủ.' });
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối tải file database.sql từ máy chủ.' });
         };
 
         // Robust Logout
