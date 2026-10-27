@@ -698,6 +698,9 @@
                             </p>
                         </div>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" onclick="exportDatabaseSql()" style="background: linear-gradient(135deg, #0284c7, #0369a1); border: none;">
+                                <i class="fas fa-file-code"></i> Tải Xuất database.sql
+                            </button>
                             <button type="button" class="btn btn-primary" onclick="exportDatabaseJson()">
                                 <i class="fas fa-file-arrow-down"></i> Tải Xuất database.json
                             </button>
@@ -1616,6 +1619,201 @@
             if (viewer) viewer.value = JSON.stringify(ldb, null, 4);
         }
 
+        window.exportDatabaseSql = async function() {
+            try {
+                var ldb = await getLiveDatabase();
+                var esc = function(str) {
+                    if (str === null || str === undefined) return "NULL";
+                    return "'" + String(str).replace(/'/g, "''") + "'";
+                };
+
+                var lines = [];
+                lines.push('-- ==============================================================================');
+                lines.push('-- CƠ SỞ DỮ LIỆU MYSQL: HỆ THỐNG CHUNG SỨC TỰ ĐỘNG LIÊN QUÂN MOBILE');
+                lines.push('-- Tự động xuất từ Admin Web lúc: ' + new Date().toLocaleString('vi-VN'));
+                lines.push('-- ==============================================================================');
+                lines.push('');
+                lines.push('CREATE DATABASE IF NOT EXISTS `chungsuc_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;');
+                lines.push('USE `chungsuc_db`;');
+                lines.push('');
+                lines.push('DROP TABLE IF EXISTS `order_details`;');
+                lines.push('DROP TABLE IF EXISTS `orders`;');
+                lines.push('DROP TABLE IF EXISTS `transactions`;');
+                lines.push('DROP TABLE IF EXISTS `event_packages`;');
+                lines.push('DROP TABLE IF EXISTS `users`;');
+                lines.push('DROP TABLE IF EXISTS `system_settings`;');
+                lines.push('');
+                lines.push('-- 1. BẢNG NGƯỜI DÙNG (users)');
+                lines.push('CREATE TABLE `users` (');
+                lines.push('  `id` INT AUTO_INCREMENT PRIMARY KEY,');
+                lines.push('  `username` VARCHAR(64) NOT NULL UNIQUE,');
+                lines.push('  `password` VARCHAR(255) NOT NULL,');
+                lines.push('  `role` ENUM(\'ROLE_ADMIN\', \'ROLE_USER\') NOT NULL DEFAULT \'ROLE_USER\',');
+                lines.push('  `balance` BIGINT NOT NULL DEFAULT 0,');
+                lines.push('  `phone` VARCHAR(20) NOT NULL,');
+                lines.push('  `email` VARCHAR(255) NULL,');
+                lines.push('  `status` ENUM(\'ACTIVE\', \'BANNED\') NOT NULL DEFAULT \'ACTIVE\',');
+                lines.push('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,');
+                lines.push('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,');
+                lines.push('  INDEX `idx_users_role` (`role`),');
+                lines.push('  INDEX `idx_users_status` (`status`)');
+                lines.push(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
+                lines.push('');
+                lines.push('-- 2. BẢNG GÓI SỰ KIỆN (event_packages)');
+                lines.push('CREATE TABLE `event_packages` (');
+                lines.push('  `id` INT AUTO_INCREMENT PRIMARY KEY,');
+                lines.push('  `package_code` VARCHAR(50) NOT NULL UNIQUE,');
+                lines.push('  `title` VARCHAR(255) NOT NULL COMMENT \'Tên gói sự kiện\',');
+                lines.push('  `ticket_count` INT NOT NULL DEFAULT 10 COMMENT \'Số vé / lượt chạy\',');
+                lines.push('  `price` BIGINT NOT NULL DEFAULT 5000 COMMENT \'Giá thanh toán (VNĐ)\',');
+                lines.push('  `original_price` BIGINT NULL COMMENT \'Giá gốc trước khi giảm\',');
+                lines.push('  `badge` VARCHAR(50) NULL DEFAULT \'HOT\',');
+                lines.push('  `description` TEXT NULL,');
+                lines.push('  `image_url` LONGTEXT NULL,');
+                lines.push('  `is_active` TINYINT(1) NOT NULL DEFAULT 1,');
+                lines.push('  `display_order` INT NOT NULL DEFAULT 0,');
+                lines.push('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,');
+                lines.push('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,');
+                lines.push('  INDEX `idx_packages_active` (`is_active`),');
+                lines.push('  INDEX `idx_packages_order` (`display_order`)');
+                lines.push(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
+                lines.push('');
+                lines.push('-- 3. BẢNG ĐƠN HÀNG (orders)');
+                lines.push('CREATE TABLE `orders` (');
+                lines.push('  `id` INT AUTO_INCREMENT PRIMARY KEY,');
+                lines.push('  `order_code` VARCHAR(50) NOT NULL UNIQUE,');
+                lines.push('  `user_id` INT NULL,');
+                lines.push('  `customer_name` VARCHAR(150) NOT NULL,');
+                lines.push('  `event_code` VARCHAR(255) NOT NULL,');
+                lines.push('  `package_id` VARCHAR(50) NULL,');
+                lines.push('  `package_title` VARCHAR(255) NULL,');
+                lines.push('  `ticket_count` INT NOT NULL DEFAULT 10,');
+                lines.push('  `unit_price` BIGINT NOT NULL DEFAULT 500,');
+                lines.push('  `total_price` BIGINT NOT NULL DEFAULT 5000,');
+                lines.push('  `speed` ENUM(\'VIP\', \'STANDARD\') NOT NULL DEFAULT \'VIP\',');
+                lines.push('  `completed_count` INT NOT NULL DEFAULT 0,');
+                lines.push('  `status` ENUM(\'PENDING\', \'RUNNING\', \'COMPLETED\', \'CANCELLED\') NOT NULL DEFAULT \'RUNNING\',');
+                lines.push('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+                lines.push(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
+                lines.push('');
+                lines.push('-- 4. BẢNG GIAO DỊCH (transactions)');
+                lines.push('CREATE TABLE `transactions` (');
+                lines.push('  `id` INT AUTO_INCREMENT PRIMARY KEY,');
+                lines.push('  `trans_code` VARCHAR(50) NOT NULL UNIQUE,');
+                lines.push('  `username` VARCHAR(64) NOT NULL,');
+                lines.push('  `type` VARCHAR(20) NOT NULL,');
+                lines.push('  `amount` BIGINT NOT NULL,');
+                lines.push('  `method` VARCHAR(50) NOT NULL DEFAULT \'VietQR\',');
+                lines.push('  `description` VARCHAR(255) NOT NULL,');
+                lines.push('  `status` VARCHAR(20) NOT NULL DEFAULT \'SUCCESS\',');
+                lines.push('  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+                lines.push(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
+                lines.push('');
+                lines.push('-- 5. BẢNG CẤU HÌNH HỆ THỐNG (system_settings)');
+                lines.push('CREATE TABLE `system_settings` (');
+                lines.push('  `id` INT AUTO_INCREMENT PRIMARY KEY,');
+                lines.push('  `setting_key` VARCHAR(100) NOT NULL UNIQUE,');
+                lines.push('  `setting_value` TEXT NOT NULL,');
+                lines.push('  `description` VARCHAR(255) NULL,');
+                lines.push('  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+                lines.push(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
+                lines.push('');
+                lines.push('-- ==============================================================================');
+                lines.push('-- DỮ LIỆU HIỆN HÀNH (LIVE SEED DATA)');
+                lines.push('-- ==============================================================================');
+                lines.push('');
+
+                // Users
+                var uList = ldb.users || [];
+                if (uList.length > 0) {
+                    lines.push('-- 1. DỮ LIỆU NGƯỜI DÙNG');
+                    var uRows = uList.map(function(u, idx) {
+                        return "(" + (idx + 1) + ", " + esc(u.username) + ", " + esc(u.password) + ", " + esc(u.role || 'ROLE_USER') + ", " + (u.balance || 0) + ", " + esc(u.phone || '0372.852.287') + ", " + esc(u.email || (u.username + '@shopchungsuc.com')) + ", 'ACTIVE', NOW())";
+                    });
+                    lines.push("INSERT INTO `users` (`id`, `username`, `password`, `role`, `balance`, `phone`, `email`, `status`, `created_at`) VALUES");
+                    lines.push(uRows.join(",\n") + ";\n");
+                }
+
+                // Packages
+                var pList = ldb.packages || [];
+                if (pList.length > 0) {
+                    lines.push('-- 2. DỮ LIỆU GÓI SỰ KIỆN');
+                    var pRows = pList.map(function(p, idx) {
+                        var pCode = p.id || ('PKG_' + (idx + 1));
+                        var origPrice = p.originalPrice || Math.round((p.price || 5000) * 1.2);
+                        return "(" + (idx + 1) + ", " + esc(pCode) + ", " + esc(p.title) + ", " + (p.ticketCount || 10) + ", " + (p.price || 5000) + ", " + origPrice + ", " + esc(p.badge || '') + ", " + esc(p.description || '') + ", " + esc(p.image || 'uploads/logo.png') + ", " + (p.isActive ? 1 : 0) + ", " + (idx + 1) + ")";
+                    });
+                    lines.push("INSERT INTO `event_packages` (`id`, `package_code`, `title`, `ticket_count`, `price`, `original_price`, `badge`, `description`, `image_url`, `is_active`, `display_order`) VALUES");
+                    lines.push(pRows.join(",\n") + ";\n");
+                }
+
+                // Settings
+                var st = ldb.settings || {};
+                lines.push('-- 3. CẤU HÌNH HỆ THỐNG');
+                var sRows = [
+                    "('ADMIN_HOTLINE', " + esc(st.adminPhone || '0372.852.287') + ", 'Số điện thoại hỗ trợ admin')",
+                    "('ADMIN_ZALO', " + esc(st.adminZalo || 'https://zalo.me/triduc1903') + ", 'Đường link Zalo hỗ trợ khách hàng')",
+                    "('DEFAULT_TICKET_PRICE', '500', 'Đơn giá mỗi vé chạy mã (VNĐ)')",
+                    "('BANK_NAME', " + esc(st.bankName || 'MB Bank') + ", 'Tên ngân hàng nhận chuyển khoản')",
+                    "('BANK_ACCOUNT_NUMBER', " + esc(st.bankAccountNumber || '01111111111100') + ", 'Số tài khoản ngân hàng')",
+                    "('BANK_ACCOUNT_NAME', " + esc(st.bankAccountName || 'NGUYEN TRI DUC') + ", 'Tên chủ tài khoản ngân hàng')"
+                ];
+                lines.push("INSERT INTO `system_settings` (`setting_key`, `setting_value`, `description`) VALUES");
+                lines.push(sRows.join(",\n") + ";\n");
+
+                // Orders
+                var oList = ldb.orders || [];
+                if (oList.length > 0) {
+                    lines.push('-- 4. DỮ LIỆU ĐƠN HÀNG');
+                    var oRows = oList.map(function(o, idx) {
+                        var cName = o.customerName || (o.user ? o.user.username : 'demo');
+                        var eCode = o.eventCode || o.giftCode || 'AOV-CODE';
+                        var pkgId = o.packageId || 'PKG_10';
+                        var pkgTitle = o.packageTitle || 'Gói Khởi Động Chung Sức';
+                        var tCount = o.ticketCount || o.totalCount || 10;
+                        var cCount = o.completedCount || 0;
+                        var uPrice = o.unitPrice || 500;
+                        var tPrice = o.price || 5000;
+                        var oStatus = o.status || 'RUNNING';
+                        return "(" + (idx + 1) + ", " + esc(o.id) + ", 3, " + esc(cName) + ", " + esc(eCode) + ", " + esc(pkgId) + ", " + esc(pkgTitle) + ", " + tCount + ", " + uPrice + ", " + tPrice + ", 'VIP', " + cCount + ", " + esc(oStatus) + ", NOW())";
+                    });
+                    lines.push("INSERT INTO `orders` (`id`, `order_code`, `user_id`, `customer_name`, `event_code`, `package_id`, `package_title`, `ticket_count`, `unit_price`, `total_price`, `speed`, `completed_count`, `status`, `created_at`) VALUES");
+                    lines.push(oRows.join(",\n") + ";\n");
+                }
+
+                // Transactions
+                var tList = ldb.transactions || [];
+                if (tList.length > 0) {
+                    lines.push('-- 5. DỮ LIỆU LỊCH SỬ GIAO DỊCH');
+                    var tRows = tList.map(function(t, idx) {
+                        return "(" + (idx + 1) + ", " + esc(t.id) + ", " + esc(t.username || 'demo') + ", " + esc(t.type || 'deposit') + ", " + (t.amount || 0) + ", " + esc(t.method || 'VietQR MBBank') + ", " + esc(t.description || 'Giao dịch hệ thống') + ", " + esc(t.status || 'SUCCESS') + ", NOW())";
+                    });
+                    lines.push("INSERT INTO `transactions` (`id`, `trans_code`, `username`, `type`, `amount`, `method`, `description`, `status`, `created_at`) VALUES");
+                    lines.push(tRows.join(",\n") + ";\n");
+                }
+
+                var sqlContent = lines.join("\n");
+                var blob = new Blob([sqlContent], { type: 'text/plain;charset=utf-8;' });
+                var url = URL.createObjectURL(blob);
+                var dl = document.createElement('a');
+                dl.setAttribute('href', url);
+                dl.setAttribute('download', 'database.sql');
+                document.body.appendChild(dl);
+                dl.click();
+                dl.remove();
+                URL.revokeObjectURL(url);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã xuất file database.sql!',
+                    text: 'File database.sql cập nhật mới nhất đã được tải về máy của bạn!'
+                });
+            } catch(e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: e.message });
+            }
+        };
+
         window.exportDatabaseJson = async function() {
             var ldb = await getLiveDatabase();
             var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(ldb, null, 4));
@@ -1734,6 +1932,7 @@
         window.handleSaveSettings = handleSaveSettings;
         window.loadAdminSettings = loadAdminSettings;
         window.updateDatabaseViewer = updateDatabaseViewer;
+        window.exportDatabaseSql = exportDatabaseSql;
         window.exportDatabaseJson = exportDatabaseJson;
         window.importDatabaseJson = importDatabaseJson;
         window.reloadDatabaseFromSource = reloadDatabaseFromSource;

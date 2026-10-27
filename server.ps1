@@ -31,10 +31,19 @@ function Get-Database {
     }
 }
 
-# Save DB helper
+# Save DB helper (Đồng thời ghi trực tiếp vào cả database.json và database.sql)
 function Save-Database($db) {
     $json = ConvertTo-Json -InputObject $db -Depth 10
     Set-Content -Path $dbFile -Value $json -Encoding UTF8
+
+    try {
+        $syncScript = Join-Path $PSScriptRoot "sync-db.ps1"
+        if (Test-Path $syncScript) {
+            & $syncScript
+        }
+    } catch {
+        Write-Host "[WARN] Không thể tự động ghi database.sql: $_" -ForegroundColor Yellow
+    }
 }
 
 # Initialize HttpListener
