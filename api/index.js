@@ -198,6 +198,48 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Sai tên đăng nhập hoặc mật khẩu!' });
   }
 
+  // 6.5. /auth/me (Lấy thông tin người dùng hiện tại)
+  if (pathname === '/auth/me') {
+    const username = (url.searchParams.get('username') || body.username || '').trim();
+    let found = null;
+    if (username) {
+      found = (currentDb.users || []).find(u => u.username.toLowerCase() === username.toLowerCase());
+    }
+    if (!found) {
+      const authHeader = req.headers['authorization'] || '';
+      if (authHeader.startsWith('Bearer TOKEN_')) {
+        const uFromToken = authHeader.replace('Bearer TOKEN_', '').trim();
+        found = (currentDb.users || []).find(u => u.username.toLowerCase() === uFromToken.toLowerCase());
+      }
+    }
+    if (found) {
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: found.id,
+          username: found.username,
+          role: found.role,
+          balance: found.balance || 0,
+          phone: found.phone || '',
+          email: found.email || ''
+        }
+      });
+    }
+    if (username) {
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: Date.now(),
+          username: username,
+          role: (username.toLowerCase() === 'admin' || username.toLowerCase() === 'zero2k5') ? 'ROLE_ADMIN' : 'ROLE_USER',
+          balance: 0,
+          phone: ''
+        }
+      });
+    }
+    return res.status(401).json({ success: false, message: 'Chưa đăng nhập!' });
+  }
+
   // 7. /auth/register
   if (pathname === '/auth/register') {
     const username = (body.username || '').trim();

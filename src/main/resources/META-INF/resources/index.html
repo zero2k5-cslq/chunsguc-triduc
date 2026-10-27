@@ -2073,20 +2073,14 @@
         // QUẢN LÝ USER & QUY TẮC ĐĂNG XUẤT RESET VỀ 0
         // =====================================================================
         async function fetchUserProfile() {
-            // Khi vào trang web thì luôn ở dạng CHƯA ĐĂNG NHẬP vào tài khoản nào cả
-            // Dọn sạch token vĩnh viễn ở localStorage
-            try {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('auth_user');
+            var token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+            var savedUser = null;
+            try { 
+                savedUser = JSON.parse(sessionStorage.getItem('auth_user') || localStorage.getItem('auth_user')); 
             } catch (e) {}
 
-            // Chỉ duy trì phiên nếu người dùng vừa chủ động đăng nhập trong tab phiên hiện tại (sessionStorage)
-            var token = sessionStorage.getItem('auth_token');
-            var savedUser = null;
-            try { savedUser = JSON.parse(sessionStorage.getItem('auth_user')); } catch (e) {}
-
-            // NẾU CHƯA ĐĂNG NHẬP HOẶC KHÔNG CÓ TOKEN -> ĐẶT CURRENTUSER = NULL (SỐ TIỀN VỀ 0)
-            if (!token || !savedUser || !savedUser.username) {
+            // NẾU CHƯA ĐĂNG NHẬP HOẶC KHÔNG CÓ THÔNG TIN USER -> ĐẶT CURRENTUSER = NULL (SỐ TIỀN VỀ 0)
+            if (!savedUser || !savedUser.username) {
                 currentUser = null;
                 updateUserUI();
                 loadOrderHistory();
@@ -2094,21 +2088,36 @@
                 return;
             }
 
+            // Gán currentUser ngay từ savedUser để giao diện đăng nhập hiển thị tức thì, không bị nhấp nháy
+            currentUser = savedUser;
+            updateUserUI();
+
+            // Thử đồng bộ dữ liệu mới nhất (số dư, role) từ serverless API
             try {
                 var res = await fetch('/api/auth/me?username=' + encodeURIComponent(savedUser.username), {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: { 'Authorization': 'Bearer ' + (token || ('TOKEN_' + savedUser.username)) }
                 });
-                var data = await res.json();
-                if (data.success && data.user) {
-                    currentUser = data.user;
-                } else {
-                    currentUser = null;
-                    sessionStorage.removeItem('auth_token');
-                    sessionStorage.removeItem('auth_user');
+                if (res.ok) {
+                    var data = await res.json();
+                    if (data.success && data.user) {
+                        currentUser = Object.assign({}, currentUser, data.user);
+                        sessionStorage.setItem('auth_user', JSON.stringify(currentUser));
+                        try { localStorage.setItem('auth_user', JSON.stringify(currentUser)); } catch (e) {}
+                    }
                 }
-            } catch (err) {
-                currentUser = savedUser;
-            }
+            } catch (err) {}
+
+            // Cập nhật số dư từ Live Database nếu có
+            try {
+                var localDb = JSON.parse(localStorage.getItem('app_database') || '{}');
+                if (localDb.users) {
+                    var found = localDb.users.find(function(u) { return u.username.toLowerCase() === currentUser.username.toLowerCase(); });
+                    if (found && typeof found.balance !== 'undefined') {
+                        currentUser.balance = found.balance;
+                    }
+                }
+            } catch(e) {}
+
             updateUserUI();
             loadOrderHistory();
             loadTransactions();

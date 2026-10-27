@@ -235,8 +235,8 @@
                         sessionStorage.setItem('auth_token', data.token);
                         sessionStorage.setItem('auth_user', JSON.stringify(data.user || { username: username }));
                         try {
-                            localStorage.removeItem('auth_token');
-                            localStorage.removeItem('auth_user');
+                            localStorage.setItem('auth_token', data.token);
+                            localStorage.setItem('auth_user', JSON.stringify(data.user || { username: username }));
                         } catch (e) {}
                         
                         // KIỂM TRA ROLE ĐỂ CHUYỂN HƯỚNG CHÍNH XÁC
@@ -285,14 +285,19 @@
                     });
 
                     if (found) {
-                        sessionStorage.setItem('auth_token', 'TOKEN_' + found.username);
-                        sessionStorage.setItem('auth_user', JSON.stringify({
+                        var userObj = {
                             id: found.id,
                             username: found.username,
                             role: found.role,
                             balance: found.balance || 0,
-                            phone: found.phone || '0901234567'
-                        }));
+                            phone: found.phone || '0372.852.287'
+                        };
+                        sessionStorage.setItem('auth_token', 'TOKEN_' + found.username);
+                        sessionStorage.setItem('auth_user', JSON.stringify(userObj));
+                        try {
+                            localStorage.setItem('auth_token', 'TOKEN_' + found.username);
+                            localStorage.setItem('auth_user', JSON.stringify(userObj));
+                        } catch(e) {}
                         var isAdmin = (found.role === 'ROLE_ADMIN' || found.username.toLowerCase() === 'admin' || found.username.toLowerCase() === 'zero2k5');
                         var redirectUrl = isAdmin ? 'admin.html' : 'index.html';
                         Swal.fire({
