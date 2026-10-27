@@ -540,9 +540,14 @@
                             <span style="font-size: 0.85rem; opacity: 0.7;">Cộng / trừ số dư và phân quyền tài khoản thành viên</span>
                         </div>
 
-                        <button class="btn btn-primary" onclick="quickAdjustBalance('demo')">
-                            <i class="fas fa-hand-holding-dollar"></i> Nạp/Trừ Tiền Thành Viên
-                        </button>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="openCreateUserModal()" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                                <i class="fas fa-user-plus"></i> Thêm Tài Khoản Mới
+                            </button>
+                            <button class="btn btn-primary" onclick="quickAdjustBalance('demo')">
+                                <i class="fas fa-hand-holding-dollar"></i> Nạp/Trừ Tiền Thành Viên
+                            </button>
+                        </div>
                     </div>
 
                     <div class="table-responsive-wrap">
@@ -1533,6 +1538,108 @@
             });
         }
 
+        function openCreateUserModal() {
+            Swal.fire({
+                title: '➕ Thêm Tài Khoản Mới',
+                html: `
+                    <div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem;">Tên đăng nhập:</label>
+                            <input id="swalNewUsername" class="swal2-input" style="width: 100%; margin: 4px 0;" placeholder="Nhập username...">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem;">Mật khẩu:</label>
+                            <input id="swalNewPassword" type="password" class="swal2-input" style="width: 100%; margin: 4px 0;" placeholder="Nhập mật khẩu..." value="123456">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem;">Số điện thoại:</label>
+                            <input id="swalNewPhone" class="swal2-input" style="width: 100%; margin: 4px 0;" placeholder="Số điện thoại..." value="0372.852.287">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem;">Số dư ban đầu (VNĐ):</label>
+                            <input id="swalNewBalance" type="number" class="swal2-input" style="width: 100%; margin: 4px 0;" value="50000">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem;">Vai trò:</label>
+                            <select id="swalNewRole" class="swal2-select" style="width: 100%; margin: 4px 0;">
+                                <option value="ROLE_USER">Khách hàng (ROLE_USER)</option>
+                                <option value="ROLE_ADMIN">Quản trị viên (ROLE_ADMIN)</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Tạo Tài Khoản',
+                cancelButtonText: 'Hủy',
+                focusConfirm: false,
+                preConfirm: function() {
+                    var u = (document.getElementById('swalNewUsername').value || '').trim();
+                    var p = (document.getElementById('swalNewPassword').value || '').trim();
+                    var phone = (document.getElementById('swalNewPhone').value || '').trim();
+                    var bal = parseInt(document.getElementById('swalNewBalance').value) || 0;
+                    var role = document.getElementById('swalNewRole').value;
+                    if (!u) {
+                        Swal.showValidationMessage('Vui lòng nhập tên đăng nhập!');
+                        return false;
+                    }
+                    if (!p) {
+                        Swal.showValidationMessage('Vui lòng nhập mật khẩu!');
+                        return false;
+                    }
+                    return { username: u, password: p, phone: phone, balance: bal, role: role };
+                }
+            }).then(async function(result) {
+                if (result.isConfirmed && result.value) {
+                    var val = result.value;
+                    var ldb = await getLiveDatabase();
+                    if (!ldb.users) ldb.users = [];
+
+                    var exist = ldb.users.find(function(u) { return u.username.toLowerCase() === val.username.toLowerCase(); });
+                    if (exist) {
+                        Swal.fire({ icon: 'warning', title: 'Tên đã tồn tại!', text: 'Tài khoản này đã có trong hệ thống.' });
+                        return;
+                    }
+
+                    var newUserObj = {
+                        id: Date.now(),
+                        username: val.username,
+                        password: val.password,
+                        phone: val.phone,
+                        email: val.username + '@shopchungsuc.com',
+                        balance: val.balance,
+                        role: val.role,
+                        createdAt: new Date().toLocaleDateString('vi-VN') + ' ' + new Date().toLocaleTimeString('vi-VN')
+                    };
+
+                    ldb.users.push(newUserObj);
+                    saveLiveDatabase(ldb);
+
+                    try {
+                        var reg = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                        reg.push(newUserObj);
+                        localStorage.setItem('registered_users', JSON.stringify(reg));
+                    } catch(e) {}
+
+                    try {
+                        await fetch('/api/auth/register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newUserObj)
+                        });
+                    } catch(e) {}
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã tạo tài khoản thành công!',
+                        text: `Tài khoản ${val.username} đã được lưu vào cơ sở dữ liệu với số dư: ${val.balance.toLocaleString('vi-VN')} đ`
+                    });
+
+                    loadAdminUsers();
+                    updateDatabaseViewer();
+                }
+            });
+        }
+
         // =====================================================================
         // 5. CÀI ĐẶT ĐƠN GIÁ & CẤU HÌNH HỆ THỐNG
         // =====================================================================
@@ -1984,6 +2091,7 @@
         window.loadAdminOrders = loadAdminOrders;
         window.changeAdminOrderStatus = changeAdminOrderStatus;
         window.loadAdminUsers = loadAdminUsers;
+        window.openCreateUserModal = openCreateUserModal;
         window.quickAdjustBalance = quickAdjustBalance;
         window.setQuickDate = setQuickDate;
         window.loadStatistics = loadStatistics;
